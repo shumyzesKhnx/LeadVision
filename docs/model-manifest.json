@@ -1,0 +1,36 @@
+{
+  "manifest_version": 1,
+  "status": "candidates_only_not_downloaded_or_benchmarked",
+  "models": [
+    {
+      "role": "generation",
+      "candidate_id": "qwen2.5:1.5b",
+      "source": "https://ollama.com/library/qwen2.5:1.5b",
+      "candidate_license": "Apache-2.0",
+      "verified_download_license": null,
+      "digest": null,
+      "download_bytes": null,
+      "benchmark_module": "08"
+    },
+    {
+      "role": "embedding",
+      "candidate_id": "sentence-transformers/all-MiniLM-L6-v2",
+      "source": "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2",
+      "candidate_license": "Apache-2.0",
+      "verified_download_license": null,
+      "revision": null,
+      "dimensions": 384,
+      "download_bytes": null,
+      "benchmark_module": "10"
+    },
+    {
+      "role": "optional_cnn",
+      "candidate_id": "ResNet18_Weights.IMAGENET1K_V1",
+      "source": "https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.resnet18.html",
+      "verified_download_license": null,
+      "digest": null,
+      "download_bytes": null,
+      "benchmark_module": "16"
+    }
+  ]
+}

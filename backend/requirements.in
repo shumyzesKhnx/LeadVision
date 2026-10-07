@@ -1,0 +1,9 @@
+# Phase 1 runtime and test dependencies. Exact tested versions are in the lock file.
+fastapi>=0.115,<0.130
+uvicorn>=0.30,<1
+SQLAlchemy>=2.0,<2.1
+pydantic>=2.10,<3
+pydantic-settings>=2.6,<3
+httpx>=0.27,<1
+pytest>=8,<10
+tzdata

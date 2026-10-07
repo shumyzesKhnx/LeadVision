@@ -1,0 +1,690 @@
+=== PAGE 1 ===
+LEAD VISION  |  SOFTWARE REQUIREMENTS SPECIFICATION
+Lead Vision SRS 1.0  |  Page 1
+Lead Vision Software Requirements 
+Specification
+AI powered lead qualification for digital agencies
+Version 1.0 • 7 October 2026 • Draft baseline for review
+Prepared for Shumyze Khan
+Bootcamp capstone project
+Submission deadline 23 October 2026
+Purpose of this document
+This document defines what Lead Vision must do, what it will deliberately defer, and how each requirement will be 
+verified. It is the requirements baseline for a solo, backend first project using a minimal HTML, CSS and JavaScript 
+interface. It precedes the detailed database design, API specification and module implementation prompts.
+The application will help an agency import prospective companies, research their websites, compare them with an 
+ideal customer profile, inspect visual website signals, assign an explainable score and prepare grounded outreach 
+for human review. It will run primarily on the developer’s laptop with free local models.
+Important scope decisions
+The core score is a transparent rule based score, not a prediction of conversion probability. Computer vision 
+produces measured signals and experimental visual similarity; it does not prove that a website is bad. Outreach is 
+drafted and reviewed inside the application; automatic sending is outside the MVP.
+Constraint Baseline
+Developer One student; first complete project
+Hardware 16 GB RAM, Intel i5 11th generation, 512 GB total SSD
+Connectivity Poor internet; cache models and demo evidence
+Available work Approximately 7 PM to midnight daily
+Delivery Working local demo, source on GitHub, tests and 
+documentation
+
+=== PAGE 2 ===
+LEAD VISION  |  SOFTWARE REQUIREMENTS SPECIFICATION
+Lead Vision SRS 1.0  |  Page 2
+1  Reading guide and project objectives
+How to use the specification
+Read Sections 2 and 3 to understand the scope and workflow. Sections 4 through 12 describe required behavior. 
+Sections 13 through 17 define interfaces, operational constraints and verification. Section 18 identifies decisions 
+that remain for technical design. Requirement identifiers such as FR 14 are stable references for future module 
+plans and tests.
+Sections Contents
+2 to 3 Scope, actors and complete workflow
+4 to 7 Agency, ICP, campaigns, lead input and website research
+8 to 10 Computer vision, semantic matching and scoring
+11 to 12 RAG, outreach, pipeline and automation
+13 to 15 Data, interfaces, security, hardware and failure behavior
+16 to 18 Acceptance tests, delivery gates and remaining decisions
+Project objectives
+O1 Reduce repetitive website research by collecting a bounded amount of evidence for each lead and presenting a 
+concise company summary. O2 Rank leads against the agency’s explicit target criteria and explain the contribution 
+of each scoring component. O3 Demonstrate meaningful NLP, local LLM, embeddings, RAG and computer vision 
+usage. O4 Preserve human control over corrections, qualification and outreach. O5 Deliver a reproducible project 
+that the student can run, explain and defend.
+Requirement language
+Must means required for the MVP. Should means a planned academic demonstration or usability enhancement that 
+follows completion of the core workflow. May means optional. Performance values are acceptance targets to 
+benchmark on the actual laptop, not measured results. Model names, package versions and exact physical database 
+tables will be selected in technical design after a small compatibility and resource check.
+Basis and precedence
+The source proposal is Lead_Vision_Details.pptx. The subsequent agreed amendments take precedence: use HTML, 
+CSS and JavaScript; develop the backend first; use free small local models; keep Git and GitHub; avoid unnecessary 
+frameworks; add a meaningful website computer vision module. This specification reduces the original enterprise 
+scope to a local capstone.
+
+=== PAGE 3 ===
+LEAD VISION  |  SOFTWARE REQUIREMENTS SPECIFICATION
+Lead Vision SRS 1.0  |  Page 3
+2  Scope and priorities
+Priority Features
+Must Agency profile and services; ICP; campaigns; manual and 
+CSV leads; duplicate prevention; bounded website text 
+and screenshots; local summary; embeddings; 
+transparent score; knowledge retrieval; reviewed 
+outreach; lead list and pipeline; basic counts; backend 
+tests; minimal UI; GitHub documentation
+Should ResNet18 feature demonstration; small independently 
+labelled ML experiment; one local n8n workflow; export 
+and tags
+May Visual similarity against a curated reference gallery; follow 
+up draft; richer charts
+Future LangGraph agents, automatic discovery, CRM 
+integrations, email sending, large crawlers, fine tuning, 
+learning to rank and production hosting
+Scope boundaries
+The MVP serves one agency workspace on one laptop, with one primary operator. Multiple campaigns and ICPs are 
+supported. Public registration, multi tenant isolation, teams, role based permissions, password recovery and OAuth 
+are deferred. The local server binds to loopback by default. Exposing it to the internet is a separate scope change 
+requiring authentication and deployment design.
+Lead generation means importing or manually adding companies and qualifying them. The MVP does not promise to 
+discover new companies automatically. It does not infer private contact details, employee counts, budgets or buying 
+intent without evidence. Contacts can be manually entered or taken from explicitly published business contact 
+information.
+Minimum submission and academic demonstrations
+Core acceptance requires working text analysis, screenshot capture, OpenCV measurements, semantic matching, 
+rule scoring, RAG and outreach review. A ResNet feature comparison is planned as the deep learning 
+demonstration. Traditional ML and n8n are smaller supplementary deliverables, separate from the authoritative 
+score. If the instructor requires those for passing, they become mandatory through a recorded scope amendment; 
+do not silently claim they are completed.
+What the MVP will not claim
+It will not claim commercial lead accuracy, measured sales uplift or production readiness. Synthetic examples may 
+illustrate workflows but cannot validate real world predictive accuracy. Unavailable website evidence is reported as 
+missing, rather than treated as proof of low opportunity.
+
+=== PAGE 4 ===
+LEAD VISION  |  SOFTWARE REQUIREMENTS SPECIFICATION
+Lead Vision SRS 1.0  |  Page 4
+3  Actors and complete workflow
+Actor Responsibility
+Agency operator Define services and target profile; add leads; review 
+evidence; edit drafts; update pipeline
+Instructor or evaluator Run documented demo; inspect outputs, evaluation and 
+repository
+Local n8n workflow Optionally submit and poll an analysis job through the API
+External website Supply permitted public text and a rendered homepage
+Local model runtime Generate embeddings and validated language outputs
+Main use case UC 01
+Preconditions: the backend and database are available; models are downloaded; an agency, ICP and campaign exist. 
+The operator adds a company name and public website URL. The system validates and normalizes the URL, checks 
+duplicates and creates a New lead. The operator requests analysis. The system creates a job and processes website 
+text and screenshot evidence within configured limits.
+The system stores extracted evidence, visual metrics and a source linked business summary, compares the company 
+with the ICP, applies scoring rules and presents a score breakdown. The operator checks unsupported or missing 
+information and corrects it where necessary. The system marks affected results stale and permits recomputation. 
+The operator generates an outreach draft using retrieved agency knowledge, edits it and approves or rejects it. The 
+operator then updates the pipeline manually.
+Alternate flows
+UC 02 CSV import validates rows independently and reports accepted, duplicate and invalid records. UC 03 If a live 
+site fails, the operator may use clearly labelled saved text and screenshot evidence for a cached demo. UC 04 If 
+Ollama is unavailable, CRUD and evidence browsing remain functional; generation is unavailable and the job shows 
+the affected stage. UC 05 If knowledge retrieval is empty, outreach can use verified service descriptions but cannot 
+invent agency achievements.
+Two independent kinds of status
+Processing status describes analysis progress: queued, running, completed, partial, failed or cancelled. Sales pipeline 
+status describes human decisions: New, Reviewed, Qualified, Contacted, Replied, Converted or Lost. Analysis 
+completion does not automatically mean that the lead is qualified or contacted.
+
+=== PAGE 5 ===
+LEAD VISION  |  SOFTWARE REQUIREMENTS SPECIFICATION
+Lead Vision SRS 1.0  |  Page 5
+4  Agency profile and ideal customer profile
+FR 01  Agency workspace
+The system must create, view and edit one agency profile containing name, description and optional business 
+contact details. Agency name is required. Data must remain available after restarting the backend.
+FR 02  Services
+The operator must add, edit and remove service names and descriptions. At least one active service is required 
+before outreach generation. Removing a service must not erase existing approved draft history.
+FR 03  Ideal customer profiles
+The system must create, view, edit and archive ICPs. Each ICP contains a name, descriptive target text, optional 
+industries, countries or regions, minimum and maximum employee counts, exclusion criteria, desired service needs 
+and scoring weights. Minimum size must not exceed maximum size; negative sizes are invalid.
+FR 04  Explicit criteria and exclusions
+Hard exclusion fields must use structured rules such as excluded industry or country. Free text preferences are 
+guidance for semantic analysis, not automatically enforceable rules. An explicit, evidenced exclusion must flag the 
+lead Ineligible for automatic qualification regardless of its numerical score; a reviewer may override with a recorded 
+reason.
+FR 05  Versioned configuration
+Saving ICP criteria or weights must create a new configuration version or equivalent immutable snapshot. Results 
+must identify the version used. Existing scores remain inspectable and are marked stale when their campaign’s 
+configuration changes.
+Acceptance examples
+Create an agency named TechNova with Website redesign and SEO services, then create an ICP targeting UK SaaS 
+firms with 20 to 100 employees. Restart the application: all fields remain. Enter a minimum size of 100 and a 
+maximum of 20: reject with a helpful validation error. Modify a scoring weight: the previous analysis retains its 
+original weight snapshot.
+Simple explanation
+The agency profile tells the system what the agency sells. The ICP tells it which businesses the agency wants to 
+approach. They are different inputs: a service describes the offer; an ICP describes the intended customer.
+
+=== PAGE 6 ===
+LEAD VISION  |  SOFTWARE REQUIREMENTS SPECIFICATION
+Lead Vision SRS 1.0  |  Page 6
+5  Campaigns and lead management
+FR 06  Campaigns
+The operator must create, list, view, edit and archive campaigns. Each campaign has a name, agency reference, 
+selected ICP and optional description. Archived campaigns retain historical leads and results; new analysis cannot 
+start until the campaign is reactivated.
+FR 07  Manual lead input
+The system must add a lead using company name, website and campaign. Industry, country, employee count, 
+contact name, business email and notes are optional. Unknown fields must be stored as missing, not as zero or 
+guessed values. Every manually entered field must be labelled as user provided.
+FR 08  CSV import
+CSV imports must support company_name and website columns and optional industry, country, employee_count, 
+contact_name and contact_email. The importer must accept UTF 8 files up to 5 MB and 100 rows per request. It 
+must provide a template and row level results. A missing required column rejects the file before import; a bad row 
+does not discard valid rows.
+FR 09  Duplicate handling
+Within a campaign, the same normalized company domain must not create a second lead. Normalize host case, 
+remove default ports and the agreed www prefix, and ignore tracking query strings for company identity. Preserve 
+the original URL as source data. Across campaigns, the same company may have separate campaign leads. Potential 
+name only duplicates are flagged for review rather than merged automatically.
+FR 10  List and detail views
+The system must list and search leads by company name, filter by campaign, pipeline state and priority, and sort by 
+score or creation date. A detail view must show evidence, model outputs, score components, warnings, drafts and 
+activities. Pagination must prevent loading the entire collection into one response.
+FR 11  Corrections and deletion
+The operator must edit company fields and notes. Corrections must preserve provenance and mark dependent 
+analysis stale. Deleting a lead requires an explicit UI confirmation and removes its dependent artifacts without 
+deleting shared agency knowledge or the campaign. Archiving a campaign is preferred to deleting history.
+
+=== PAGE 7 ===
+LEAD VISION  |  SOFTWARE REQUIREMENTS SPECIFICATION
+Lead Vision SRS 1.0  |  Page 7
+6  Website evidence acquisition
+FR 12  Bounded website research
+Research must fetch the homepage and optionally up to two same domain pages such as About or Services. The 
+default is homepage only. Maximum page content is 2 MB per page; each navigation or fetch has a 30 second 
+timeout and at most one retry. The system must not attempt login, bypass access restrictions or crawl indefinitely.
+FR 13  Text extraction
+Extract readable page text while removing scripts, styles, repeated navigation and obvious boilerplate where 
+feasible. Save the page title, source URL, collection time and bounded cleaned text. Preserve enough source 
+excerpts to support generated claims. Blank text, blocked pages and non HTML responses must produce explicit 
+warnings.
+FR 14  Screenshot evidence
+Playwright must capture a fixed desktop viewport homepage screenshot after a bounded render wait. Record 
+viewport, URL, timestamp and screenshot path. Default target viewport is 1366 by 768 pixels; a full page capture is 
+optional. Store a thumbnail for the UI. Consent overlays or error pages must be flagged where detectable; a human 
+can mark the screenshot unusable.
+FR 15  Saved evidence mode
+The operator must be able to run the demonstration with prepared website text and PNG or JPEG screenshots. The 
+source type must say cached or uploaded, with original URL and collection time when known. Imported screenshots 
+must be validated as images and limited to 10 MB and 20 million decoded pixels. Cached data must never be 
+presented as a fresh crawl.
+FR 16  Website safety
+Only HTTP and HTTPS public destinations are allowed. Reject local, private, link local, reserved and loopback 
+addresses, including IPv6 equivalents. Revalidate resolved destinations after redirects, and prevent browser 
+subrequests from reaching internal addresses. These protections apply to both text fetching and screenshot 
+capture. Restrict redirects to five and do not accept arbitrary local file paths from the browser.
+Acceptance example
+A valid public homepage produces text evidence and one screenshot. A timeout produces an actionable stage error. 
+A URL pointing to localhost is rejected before any request is sent. The offline fixture produces equivalent pipeline 
+inputs with a visible Cached evidence label.
+
+=== PAGE 8 ===
+LEAD VISION  |  SOFTWARE REQUIREMENTS SPECIFICATION
+Lead Vision SRS 1.0  |  Page 8
+7  NLP and local language analysis
+FR 17  Text preprocessing
+The NLP service must normalize whitespace, remove duplicate lines and retain readable business content. Input 
+truncation and chunk selection must be recorded. It must not discard the evidence links needed to audit factual 
+claims.
+FR 18  Structured business analysis
+Using a small local LLM through Ollama, generate a concise business summary, candidate industry, products or 
+services, explicitly supported market or size information, and possible agency service opportunities. Each factual 
+extracted field must include a source excerpt or remain unknown. Opportunities must be labelled hypotheses and 
+must identify their supporting observations.
+FR 19  Output validation
+LLM outputs must follow a schema checked by the backend. Limit list lengths and field sizes. Reject unknown 
+structural fields. Permit one bounded repair attempt for invalid output; if it still fails, report a validation failure and 
+retain raw output for developer diagnostics. An LLM response must not write directly to the database without 
+validation.
+FR 20  Source hierarchy
+Keep user provided, source extracted and model inferred values distinguishable. A model must not overwrite a 
+reviewer correction. Employee counts, country, contact details or performance claims must not be invented from 
+the company name or visual appearance. Numerical model confidence must not be represented as a calibrated 
+probability unless evaluated.
+FR 21  Local runtime
+Generation must use a freely available local model with a recorded model identifier and licence. Process one 
+generation request at a time by default. Set a bounded context and output length, cache stable results and handle 
+runtime disconnection without crashing CRUD APIs. Exact model choice remains a benchmark decision.
+Acceptance example
+A website says “CloudBooks provides accounting software to small businesses” but says nothing about employees. 
+The system may summarize the accounting product and identify a SaaS hypothesis with supporting text. Employee 
+count stays unknown. It must not write “50 employees” to satisfy the ICP.
+Simple explanation
+NLP prepares and interprets website language. Ollama runs the language model locally. The model helps summarize 
+evidence; deterministic code validates fields and controls the workflow.
+
+=== PAGE 9 ===
+LEAD VISION  |  SOFTWARE REQUIREMENTS SPECIFICATION
+Lead Vision SRS 1.0  |  Page 9
+8  Computer vision requirements
+CV 01  Image preprocessing
+The service must validate screenshot dimensions, convert colour consistently and resize a working copy while 
+preserving the original. Record preprocessing settings so measurements are reproducible.
+CV 02  OpenCV measurements
+The core CV service must calculate edge density, brightness distribution and colour distribution or dominant 
+colours. A whitespace proxy may estimate the proportion of low variation image regions. Every metric must 
+document its mathematical definition, units, normalization and limitation. The same image and configuration must 
+yield the same values.
+CV 03  Interpretation limits
+Edge density is not text density. Low variation regions are not always whitespace. Screenshot brightness does not 
+establish WCAG text contrast. OpenCV alone must not claim CTA recognition, usability failure or an outdated design. 
+CTA prominence and true text area detection are deferred unless a separate detector or DOM assisted 
+measurement is implemented and evaluated.
+CV 04  Visual opportunity heuristic
+A documented configurable heuristic may convert selected measurements into a 0 to 100 visual review score. It 
+must be labelled experimental and versioned. Without a reviewed calibration set, the score is advisory and has zero 
+weight in the default lead ranking. The operator must see raw measurements, the screenshot and limitations 
+together.
+CV 05  CNN demonstration
+As a Should deliverable, use pretrained ResNet18 in inference mode to extract a visual feature vector. Compare 
+vectors with a small curated reference gallery and show similarity or nearest examples. Record model weights and 
+preprocessing. ImageNet features are generic visual representations; similarity to an attractive reference is not 
+proof of website quality or buying intent.
+CV 06  Unavailable images
+If capture fails or the reviewer marks an image unusable, mark CV unavailable and leave its score missing. Text and 
+semantic processing may continue. A blocked screenshot must not become a high redesign opportunity score.
+Acceptance evidence
+Use a uniform image and a detailed grid fixture to verify measurement behavior. Inspect at least six varied website 
+screenshots with human notes. If CV scoring is enabled, document how thresholds were chosen and display the 
+experimental label. No CNN training or YOLO object detection is required for the MVP.
+
+=== PAGE 10 ===
+LEAD VISION  |  SOFTWARE REQUIREMENTS SPECIFICATION
+Lead Vision SRS 1.0  |  Page 10
+9  Embeddings and semantic matching
+SEM 01  Meaning representations
+A small free local embedding model must encode the ICP descriptive text and the cleaned company description 
+using the same model and dimensions. Store model identifier, input hash and configuration. Reuse vectors when 
+inputs have not changed.
+SEM 02  Similarity
+Compute cosine similarity between nonzero vectors. Keep the raw cosine value and the normalized score 
+separately. The default normalized score is 100 multiplied by the raw value clipped to the range 0 to 1. This is a 
+scoring convention and must not be labelled percentage probability of ICP fit.
+SEM 03  Separation from hard rules
+Semantic matching contributes a graded relevance signal. Structured industry, region, size and exclusions are 
+evaluated independently. Semantically related language does not override a known wrong market or a hard 
+exclusion.
+SEM 04  Missing and stale inputs
+Empty company text or an unavailable model results in missing similarity, not zero relevance. Changing company 
+description, ICP target text or embedding model marks affected similarities stale. Recompute before using the result 
+for a fresh qualification decision.
+SEM 05  Local retrieval scale
+For the expected small dataset, normalized vectors stored locally with NumPy similarity search are sufficient. A 
+dedicated vector database is not mandatory. Retrieval must filter by agency and active document version before 
+ranking. LangChain can orchestrate the retriever without forcing Chroma or FAISS into the MVP.
+Acceptance examples
+Compare an ICP for SaaS accounting companies with two curated descriptions: a cloud accounting product and an 
+unrelated construction company. Record both cosine scores and investigate if the ordering is unexpected. Repeat 
+the same input with the same model and confirm the result is stable within floating point tolerance. This small 
+example checks behavior; it does not establish population accuracy.
+Simple explanation
+Embeddings turn text meaning into number vectors. Similarity compares those vectors. This can recognize related 
+wording, but a high similarity value cannot tell us whether the prospect has money, wants to buy or will reply.
+
+=== PAGE 11 ===
+LEAD VISION  |  SOFTWARE REQUIREMENTS SPECIFICATION
+Lead Vision SRS 1.0  |  Page 11
+10  Explainable lead scoring
+SCORE 01  Deterministic components
+The authoritative score must combine evidence based component values using saved weights. The backend 
+calculates it, rather than asking the LLM to invent a number. Every result must show component value, weight, 
+contribution, source and availability.
+Component Default weight Value rule
+Industry fit 25 100 for a reviewed target industry; 0 
+for known mismatch; otherwise 
+missing
+Geographic fit 20 100 for a known target region; 0 for 
+known mismatch; otherwise missing
+Company size fit 15 100 inside configured range; 0 
+outside; otherwise missing
+Semantic fit 40 Clipped cosine similarity multiplied by 
+100
+Visual opportunity 0 Optional experimental component; 
+enabled only after calibration
+For criteria not selected by the ICP, mark the component not applicable and remove it from the eligible weight total. 
+At least one scored criterion is required. Weights must be nonnegative and their eligible total must be positive. 
+Enabling CV requires explicit redistribution or normalization of weights and a new configuration version.
+SCORE 02  Missing evidence and coverage
+Calculate score = sum of available weight times component value divided by sum of available weights. Calculate 
+coverage = available weight divided by eligible weight. If no components are available, score is unavailable. 
+Coverage below 60 percent forces Needs review instead of automatic qualification; show which fields are missing. 
+Coverage is evidence completeness, not model confidence.
+SCORE 03  Priority rules
+Default score bands are High at 75 or above, Medium from 50 to below 75, and Low below 50. A lead can be 
+recommended for qualification only if High, coverage is at least 60 percent, no hard exclusion is present and results 
+are current. The operator makes the final pipeline decision. Store threshold versions.
+Worked example
+Industry 100, region 100, unknown size and semantic 80 yield (25×100 + 20×100 + 40×80) / 85 = 90.59. Coverage is 
+85/100 = 85 percent. The interface displays 90.6, High and the missing size field. If only industry is known, score is 
+100 but coverage is 25 percent, so the result is Needs review. This prevents incomplete evidence from 
+masquerading as strong qualification.
+SCORE 04  History and overrides
+Save each scoring run with input and rule versions. An operator override needs a reason and is displayed separately 
+from the calculated score. Regeneration must not erase reviewer decisions or earlier runs.
+
+=== PAGE 12 ===
+LEAD VISION  |  SOFTWARE REQUIREMENTS SPECIFICATION
+Lead Vision SRS 1.0  |  Page 12
+11  Agency knowledge and RAG outreach
+RAG 01  Knowledge input
+The operator must add agency knowledge as pasted text or UTF 8 TXT files up to 1 MB each. Each document 
+requires a title and type such as service, case study or profile. Documents can be edited, archived and indexed. PDF 
+parsing is deferred. Use real approved agency content or clearly labelled fictional demo content.
+RAG 02  Chunking and index
+Split documents into bounded overlapping text chunks, retain document and chunk identifiers, and generate 
+embeddings. Record the chunking and model configuration. An edited document must replace or deactivate its old 
+chunks so retrieval cannot silently mix versions.
+RAG 03  Retrieval
+Use the company description and relevant agency service as a query. Retrieve up to three eligible chunks and save 
+their identifiers and similarity values with the draft. Apply a configurable minimum relevance threshold. Return an 
+explicit empty result when nothing passes. LangChain should connect splitting, retrieval, prompt assembly and the 
+Ollama call.
+RAG 04  Grounding
+The generator must receive verified company context and retrieved approved agency evidence. It must not invent 
+client names, statistics, testimonials or successful projects. If no case study is retrieved, draft a service based 
+message without a case study claim. Internally preserve the evidence used for each factual claim.
+OUT 01  Draft generation
+Generate a subject and a concise message, with a default body target of 80 to 150 words. Inputs include selected 
+service, company summary, supported observations and retrieved agency knowledge. Use a generic greeting when 
+no verified contact name exists. Phrase visual observations respectfully as possible improvement areas.
+OUT 02  Human review
+Draft states must include Draft, Edited, Approved and Rejected. The operator can edit and save text, approve it or 
+reject it. Regeneration creates a new version; it does not overwrite an approved draft. Approval records reviewer 
+and time. Approval does not send an email or move the pipeline to Contacted.
+OUT 03  Manual use
+The operator may copy an approved draft or export it. The application must clearly identify generated text as 
+requiring factual review. External email sending, bulk messaging and mailbox integrations are outside the MVP.
+Simple explanation
+RAG retrieves relevant agency facts before the local LLM writes. LangChain connects these steps. Neither RAG nor 
+LangChain guarantees factuality; source visibility and human review remain necessary.
+
+=== PAGE 13 ===
+LEAD VISION  |  SOFTWARE REQUIREMENTS SPECIFICATION
+Lead Vision SRS 1.0  |  Page 13
+12  Pipeline analytics and academic extensions
+PIPE 01  Manual pipeline
+Support New, Reviewed, Qualified, Contacted, Replied, Converted and Lost. The operator chooses changes 
+explicitly. Each change records previous state, new state, time and optional note. Reopening a terminal lead 
+requires a reason. Show available transitions in the UI; document the transition rules in technical design.
+PIPE 02  Activity history
+Record lead creation, imports, research jobs, scoring runs, corrections, draft reviews and status changes. Preserve 
+the time and origin of each event. Analysis retries must not create duplicate sales activities.
+AN 01  Basic dashboard
+Show total leads, leads by pipeline state, number of High priority leads, processed and failed counts, and active 
+campaigns. Counts must respect the selected campaign filter and match the database. Converted is a manually 
+reported state, not independently verified revenue.
+EXP 01  Export
+As a Should feature, export filtered leads with score, coverage, priority and status to CSV. Escape CSV cells beginning 
+with formula characters so spreadsheet software does not execute them. Export must not include internal file paths 
+or secrets.
+AUTO 01  n8n demonstration
+As a Should deliverable, provide one local manual trigger workflow: request analysis of a chosen lead, obtain job ID, 
+poll with a bounded interval, and report completed, partial or failed status. Limit attempts and use an idempotency 
+key. n8n coordinates API calls; the Python backend owns scoring and model logic. Export the workflow JSON 
+without credentials.
+ML 01  Small supervised experiment
+As a Should deliverable, evaluate a logistic regression classifier on a small independently human labelled dataset 
+using available numeric lead features. Keep it separate from the production score. Record dataset origin, feature 
+definitions, train and evaluation split, class balance, precision, recall and F1. Group duplicate companies in one split 
+to reduce leakage.
+ML 02  Honest evaluation
+Labels generated from the rule score cannot validate predictive ability and must not be presented as independent 
+ground truth. Synthetic examples can verify plumbing only. If enough genuine labels cannot be collected, submit an 
+experimental notebook and explicitly state that accuracy is unestablished. No revenue or conversion prediction is 
+required.
+
+=== PAGE 14 ===
+LEAD VISION  |  SOFTWARE REQUIREMENTS SPECIFICATION
+Lead Vision SRS 1.0  |  Page 14
+13  Data requirements and logical entities
+Entity Required information
+Agency and service Names, descriptions, active state, timestamps
+ICP and configuration Target criteria, exclusions, weights, thresholds, versions
+Campaign Name, agency, ICP reference, archive state
+Company and lead Identity, domain, campaign, optional fields, provenance, 
+pipeline state
+Evidence URLs, text excerpts, screenshot paths, timestamps, source 
+type
+Analysis job and run Stage status, warnings, inputs, model and configuration 
+versions
+Visual analysis Metric values, preprocessing, usability flag, experimental 
+score
+Semantic result and score Raw cosine, component contributions, coverage, priority
+Knowledge document and chunk Text, versions, model identifiers, vectors
+Outreach version Subject, body, retrieved sources, review state, timestamp
+Activity Entity reference, action, previous and new value, origin, 
+timestamp
+DATA 01  Persistence and consistency
+SQLite must store structured records through SQLAlchemy. Enable and test foreign key enforcement. Files such as 
+screenshots can be stored under a controlled data directory with database references. Save completed stage results 
+transactionally; a failed later stage must not corrupt valid earlier evidence. Do not hold a long database write 
+transaction while the model generates text.
+DATA 02  Provenance and freshness
+Fields must retain source category, source link or manual origin and collection time. Use ISO 8601 UTC timestamps 
+internally and show Asia Karachi local time in the interface. A result must reference its evidence run, ICP version, 
+model versions and score rules. A changed input must mark dependent results stale and require explicit 
+recomputation for current decisions.
+DATA 03  Retention and backup
+Retain evidence and analysis locally until the operator deletes them. Provide documented backup and restore of the 
+database, knowledge index and associated evidence folder as one consistent set. Run the backup with writes 
+paused or a safe SQLite backup mechanism. A restore exercise must confirm that lead detail pages still resolve their 
+screenshots.
+These are logical requirements, not a final physical schema. The technical design will choose table names, 
+constraints, indexes and file paths without changing the behavior described here.
+
+=== PAGE 15 ===
+LEAD VISION  |  SOFTWARE REQUIREMENTS SPECIFICATION
+Lead Vision SRS 1.0  |  Page 15
+14  Interfaces and backend processing
+API 01  Backend first interfaces
+FastAPI must expose documented JSON REST operations for profiles, services, ICPs, campaigns, leads, imports, jobs, 
+scores, knowledge, drafts, activities and dashboard counts. Swagger documentation must permit testing the 
+complete core workflow before a frontend is built. Exact endpoint paths and schemas will be defined in the API 
+design.
+API 02  Jobs and idempotency
+Analysis initiation returns a job identifier immediately, with a target response under two seconds excluding upload 
+transfer. Use a simple persistent single worker queue so CPU heavy analysis does not block ordinary requests. 
+Polling returns current stage, timestamps, progress information and bounded error details. Repeated requests with 
+the same idempotency key must return the same job. One lead cannot have competing active runs.
+API 03  Restart and retry
+On restart, interrupted running jobs become Interrupted or failed with a retry action; they must not stay Running 
+forever. Queued jobs may resume after checking current inputs. A retry starts a new run or deliberately resumes 
+verified stages, preserving the prior history. Maximum one automatic stage retry is allowed; user triggered retries 
+are separate recorded actions.
+API 04  Error responses
+Return consistent errors containing a machine readable code, simple message and field or stage details. Validation 
+errors identify the invalid field. Database or model exceptions must not leak traceback, local filesystem details or 
+secrets to the frontend. Developer logs may contain diagnostic details without storing passwords or credentials.
+UI 01  Minimal frontend
+Use HTML for forms and lists, CSS for readable layout, and JavaScript fetch calls for API requests. FastAPI should 
+serve the static interface from the same origin. Required views are agency and ICP setup, campaign and lead entry, 
+lead list, analysis detail, knowledge input, draft review and a simple dashboard. Shared views or tabs are acceptable; 
+a separate page per module is unnecessary.
+UI 02  Usability
+Forms must label required fields, preserve entered values after validation errors and show loading, success, partial 
+failure and unavailable states. Disable duplicate submission while a request is in flight. Use textContent or 
+equivalent safe rendering for untrusted website and model text. Basic keyboard navigation, readable contrast and 
+visible status labels are required. No React, Next.js or Tailwind dependency is required.
+
+=== PAGE 16 ===
+LEAD VISION  |  SOFTWARE REQUIREMENTS SPECIFICATION
+Lead Vision SRS 1.0  |  Page 16
+15  Nonfunctional requirements and technology roles
+ID Requirement and verification target
+NFR 01 Free operation: no paid API is required for the core demo; 
+record all model licences and download instructions.
+NFR 02 Hardware: CPU execution supported; one browser 
+capture and one inference job at a time; target total 
+system memory under 14 GB during the reference demo. 
+Measure on the laptop.
+NFR 03 Performance: ordinary local CRUD target under 1 second 
+for 100 leads; target one lead analysis within 5 minutes 
+after models are loaded. Benchmark and report observed 
+timing.
+NFR 04 Resource bounds: initial model downloads target at most 
+5 GB combined; keep generated project data under 2 GB 
+for the reference demo. SSD capacity is total capacity, not 
+available space.
+NFR 05 Offline operation: after dependencies and models are 
+downloaded, saved evidence can run the analysis demo 
+offline. Live websites, initial downloads and GitHub 
+pushes still need internet.
+NFR 06 Reliability: partial outputs remain reviewable; stale results 
+are visible; restart recovery and idempotency tests pass.
+NFR 07 Maintainability: separate route, schema, persistence and 
+service responsibilities; pinned tested dependencies; 
+configuration outside code.
+NFR 08 Reproducibility: README provides setup, commands, 
+model download, demo fixtures, tests and known 
+limitations.
+Security and trust requirements
+Bind the server, Ollama and optional n8n to local interfaces by default. Store secrets in environment configuration 
+excluded from Git. Treat fetched pages, uploaded documents and model output as untrusted data. Their text cannot 
+authorize shell execution, external messaging, new downloads or tool calls. Prompt templates must instruct the 
+model to use evidence as data; backend validation and bounded operations remain the enforcement mechanism.
+Validate file size, type, decoded image size and storage location. Use parameterized database operations. Do not 
+expose unrestricted paths or a directory listing through the API. Keep only permitted public business information 
+and manually supplied contacts. The MVP collects no passwords for target websites and has no external outreach 
+sending capability.
+Hardware fallback
+If memory exceeds the target, reduce context size, image working resolution and loaded model concurrency. If 
+latency is poor, benchmark a smaller generation model and use cached evidence. Record changed targets and 
+observed limitations honestly; do not claim an unmeasured hardware guarantee.
+
+=== PAGE 17 ===
+LEAD VISION  |  SOFTWARE REQUIREMENTS SPECIFICATION
+Lead Vision SRS 1.0  |  Page 17
+16  What each technology does
+Technology Role and input to output
+HTML CSS JavaScript Display forms and results; operator action becomes an API 
+request.
+FastAPI Validate requests and coordinate services; request 
+becomes job or stored response.
+SQLite and SQLAlchemy Store records and relationships; Python objects become 
+durable local data.
+Playwright Render a public homepage; URL becomes screenshot 
+evidence.
+OpenCV and Pillow Validate and measure images; screenshot becomes 
+reproducible visual metrics.
+ResNet18 Optional pretrained CNN; image becomes a feature vector 
+for comparison.
+Local embedding model Text becomes vectors for ICP comparison and knowledge 
+retrieval.
+NumPy local vector search Query vector and saved vectors become ranked relevant 
+chunks.
+Ollama and small LLM Evidence plus instructions become a structured summary 
+or draft.
+RAG Retrieve agency facts and insert them into generation 
+context.
+LangChain Connect document splitting, retrieval and model 
+prompting in the RAG module.
+scikit learn Optional independent supervised experiment; labelled 
+features become a tested classifier.
+n8n Optional local workflow; manual event becomes a 
+sequence of backend calls.
+Git and GitHub Local commits preserve history; pushes publish selected 
+source to the repository.
+Excluded frameworks
+LangGraph is deferred because the core analysis is a fixed bounded workflow. YOLO is deferred because general 
+object detection does not establish website business fit. Docker, PostgreSQL, pgvector, Chroma and FAISS are not 
+requirements for this small local MVP. Add them only through a justified technical change rather than to expand the 
+technology list.
+Local operation in plain language
+The browser is the interface. FastAPI is the coordinator. SQLite remembers information. The website service collects 
+evidence. OpenCV measures images. Embeddings compare meaning. Ollama writes summaries and drafts. RAG 
+supplies relevant agency facts. Python scoring applies explicit rules. The operator reviews the result. Each 
+component solves one identifiable part of that flow.
+
+=== PAGE 18 ===
+LEAD VISION  |  SOFTWARE REQUIREMENTS SPECIFICATION
+Lead Vision SRS 1.0  |  Page 18
+17  Acceptance tests and evaluation
+Test Requirement coverage Expected result
+AT 01 FR 01 to 06 Create profile, services, ICP and campaign; restart; values persist.
+AT 02 FR 07 to 11 Import mixed valid, duplicate and invalid rows; report every row correctly.
+AT 03 FR 12 to 16 Capture public fixture site; block private targets and redirect attempts; cached 
+evidence works.
+AT 04 FR 17 to 21 Known product summarized with evidence; unknown size remains missing; 
+invalid model JSON handled.
+AT 05 CV 01 to 06 Fixture metrics reproducible; blocked image unavailable; no unsupported CTA 
+claims.
+AT 06 SEM 01 to 05 Vectors comparable; empty input missing; input change marks similarity stale.
+AT 07 SCORE 01 to 04 Worked score gives 90.59 and 85 percent coverage; only industry yields Needs 
+review.
+AT 08 RAG 01 to 04 Known relevant chunk retrieved; edited old chunks excluded; empty retrieval 
+invents no case study.
+AT 09 OUT 01 to 03 Edit and approve draft; regeneration preserves version; no message is sent.
+AT 10 PIPE 01 to AN 01 Manual stage change logged; dashboard counts equal filtered database records.
+AT 11 API 01 to 04 Duplicate key returns same job; interrupted job recovers; CRUD works during 
+analysis.
+AT 12 NFR 01 to 08 Offline fixture demo works; measure runtime, memory, disk; restore evidence 
+backup.
+Quality evaluation protocol
+Use at least ten curated company evidence records across relevant, irrelevant and incomplete cases. Label them 
+before inspecting system scores wherever possible. Record human judgement of business fit, evidence accuracy and 
+ranking usefulness. This is an exploratory capstone evaluation, not a statistically representative benchmark.
+Review at least five generated drafts for factual grounding, appropriate personalization and readability. Count 
+unsupported factual claims and require zero in the final approved demo drafts. Assess at least six screenshots for 
+metric interpretation. Publish observed results, failures and limitations rather than planned metrics as if they were 
+measured.
+Test artifacts
+Deliver automated tests for score arithmetic, missing values, validation, duplicate handling, retrieval version filtering 
+and job recovery. Integration tests can use a controlled local fixture site through a test only allowlist; production 
+private address protections must stay enabled. Keep live model evaluation separate so ordinary tests do not require 
+internet or large downloads.
+
+=== PAGE 19 ===
+LEAD VISION  |  SOFTWARE REQUIREMENTS SPECIFICATION
+Lead Vision SRS 1.0  |  Page 19
+18  Delivery gates and remaining decisions
+Backend first delivery gates
+Gate Completion evidence
+1 Requirements and design Reviewed SRS; selected model candidates; ERD and API 
+contracts
+2 Core backend Persistent profile, ICP, campaign and lead workflow tested 
+in Swagger
+3 Analysis pipeline Bounded research, screenshot, text analysis, embeddings 
+and score work with saved evidence
+4 Grounded outreach Knowledge ingestion, retrieval, draft versions and human 
+review pass
+5 Minimal interface Plain HTML CSS JS supports the complete operator 
+workflow
+6 Academic additions CNN demonstration, optional ML experiment and n8n 
+workflow documented
+7 Submission readiness Tests, measured evaluation, README, GitHub source and 
+repeatable demo
+Deadline and working window
+Work is planned from 7 October through 22 October 2026, with submission on 23 October. The nominal budget is 
+approximately 80 hours at five hours per evening, though the current evening is already partly elapsed. Target 
+feature freeze by the end of 20 October. Reserve 21 October for integration fixes and 22 October for the final demo, 
+documentation and backup. Detailed daily module planning follows the technical design.
+Repository requirements
+Initialize Git early and commit after each working module with a meaningful message. GitHub must contain source, 
+configuration examples, tests, small lawful demo fixtures and documentation. Exclude virtual environments, model 
+weights, SQLite databases, private lead records, credentials and large generated screenshots. Include a .gitignore, 
+pinned dependency files, README and model download instructions. Confirm repository visibility before the first 
+push; private is the initial recommendation while developing.
+Decisions for the next design document
+Select the exact local LLM and embedding model after one laptop benchmark and licence check. Confirm operating 
+system and available disk space before writing setup commands. Choose CNN reference examples and independent 
+ML labels. Finalize physical database schema, endpoint paths, response schemas, queue implementation, score 
+configuration storage and folder structure. Confirm whether the instructor makes n8n, CNN or traditional ML 
+mandatory.
+Definition of done
+A fresh documented local setup can run the saved evidence demonstration from agency setup through approved 
+outreach and manual pipeline update. All Must requirements pass or have an explicitly accepted scope change. 
+Failures and missing evidence are visible. Scores are traceable. No paid service is needed. The student can explain 
+each module and its limitations, and the repository contains enough instructions for the evaluator to reproduce the 
+demo.
+Review status: Draft baseline for the student and instructor. This document does not imply instructor approval. 
+Requirements changes must identify affected IDs, acceptance tests and deadline impact before implementation.

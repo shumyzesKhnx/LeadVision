@@ -1,0 +1,32 @@
+# Local configuration and private runtime data
+.env
+.env.*
+!.env.example
+data/
+backups/
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+
+# Python, tooling and generated files
+.venv/
+venv/
+.cache/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# Downloaded models and machine-specific editor state
+models/
+*.gguf
+*.safetensors
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
