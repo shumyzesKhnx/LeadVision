@@ -34,3 +34,13 @@ No new initiation endpoint: analysis jobs own this stage. `GET /runs/{id}` expos
 ## Tests and acceptance criteria
 
 Fake response for “CloudBooks provides accounting software to small businesses” produces supported product summary and unknown employees. Test hallucinated employee count, absent citation, invalid source ID, extra JSON keys, excessive field lengths and one-repair exhaustion. Prompt-injection text must not execute anything or modify pipeline. Test correction precedence and cache invalidation after input/model/prompt change. Offline live-model evaluation is separate from ordinary fake-runtime tests. AT-04 passes only when valid source linkage and missing-value behavior are demonstrated; polished text alone is insufficient.
+
+## Implemented phase 8
+
+Migration 008, preprocessing/business-analysis handlers, local Ollama adapter, strict cited output schema, exact-input cache, immutable stored results and separate generation-model readiness are implemented. GET /runs/{id} includes business_analysis and provenance. Active services and manual industry/employee/country/bounded description are context, never written back by the model. Website citation membership is checked against selected original substrings; entailment remains human review. Unsupported size claims are removed.
+
+The user already had qwen2.5:3b Q4_K_M installed. Two synthetic fixtures passed a real local trial; this is a narrow integration/latency check, not a broad quality benchmark. Its installed license is Qwen Research License, as recorded in model-manifest.json; the earlier 1.5b Apache candidate is not the selected model. Peak model RAM was not measured. Full deployment/hardware acceptance remains with module 19.
+
+Use a conservative UTF-8 byte upper bound for the Qwen byte-level token budget, with 256 template tokens plus output reservation; exact tokenizer counts are not available locally. Trim text explicitly and record offsets/decisions. Runtime prompt_eval_count is checked against the configured budget. Defaults are context 4096, output 768, selected text 1600 UTF-8 bytes and call timeout 110 seconds. This intentionally favours a small first-project trial; larger selection needs measured configuration.
+
+One repair or transport retry shares a maximum two-generation-call budget. Cooperative cancellation closes pending HTTP requests. Model digest and prompt hashes are checked; changed evidence review discards results. Business-stage failure preserves evidence and allows an independent visual handler to continue when implemented. Bounded invalid-output diagnostics are private and retained up to 24 hours before cleanup. Live fetching, CV, semantics and scoring remain later modules. See [the walkthrough](../phase-08-nlp.md).

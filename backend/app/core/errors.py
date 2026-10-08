@@ -22,12 +22,15 @@ class AppError(Exception):
         message: str,
         status_code: int = 409,
         details: list[ErrorDetail] | None = None,
+        *,
+        import_report: dict | None = None,
     ):
         super().__init__(code)
         self.code = code
         self.message = message
         self.status_code = status_code
         self.details = details or []
+        self.import_report = import_report
 
 
 def error_response(request: Request, error: AppError) -> JSONResponse:
@@ -38,6 +41,7 @@ def error_response(request: Request, error: AppError) -> JSONResponse:
             message=error.message,
             details=error.details[:30],
             request_id=request_id,
+            import_report=error.import_report,
         )
     )
     return JSONResponse(
@@ -71,9 +75,14 @@ def install_error_handlers(app: FastAPI) -> None:
             )
             for item in exc.errors()[:30]
         ]
-        return error_response(
-            request, AppError("VALIDATION_ERROR", "Check the highlighted fields.", 422, details)
-        )
+        code = "VALIDATION_ERROR"
+        if request.url.path.startswith("/api/v1/icps"):
+            locations = {part for item in exc.errors() for part in item["loc"] if isinstance(part, str)}
+            if "weights" in locations:
+                code = "INVALID_WEIGHTS"
+            elif "thresholds" in locations:
+                code = "INVALID_THRESHOLDS"
+        return error_response(request, AppError(code, "Check the highlighted fields.", 422, details))
 
     @app.exception_handler(HTTPException)
     async def http_error(request: Request, exc: HTTPException):
@@ -83,6 +92,10 @@ def install_error_handlers(app: FastAPI) -> None:
             413: ("PAYLOAD_TOO_LARGE", "The request exceeds its size limit."),
         }
         code, message = known.get(exc.status_code, ("HTTP_ERROR", "The request could not complete."))
+        if exc.status_code == 413 and request.url.path.endswith('/imports'):
+            code, message = 'CSV_TOO_LARGE', 'CSV files must be at most 5 MB.'
+        elif exc.status_code == 413 and request.url.path.endswith('/saved-evidence'):
+            code, message = 'EVIDENCE_TOO_LARGE', 'Saved evidence requests exceed their size limit.'
         response = error_response(request, AppError(code, message, exc.status_code))
         if exc.headers and "Allow" in exc.headers:
             response.headers["Allow"] = exc.headers["Allow"]

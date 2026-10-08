@@ -1,0 +1,4 @@
+company_name,website,industry,country,employee_count,contact_name,contact_email
+Demo Software Company,https://example.com,software,PK,35,,
+Second Demo Company,https://second.example.com,software,PK,60,,
+Invalid Demo Company,https://invalid.example.com,software,PK,-5,,

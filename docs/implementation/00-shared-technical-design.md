@@ -48,7 +48,7 @@ Routes translate HTTP to service calls. Pydantic schemas validate external input
 
 Use SQLite with SQLAlchemy, foreign keys enabled on **every connection**, WAL mode, a bounded busy timeout (proposed 5 seconds), and short transactions. Use a lightweight numbered migration runner with a schema version table, rather than an enterprise migration stack. One API process and one worker process are supported. A second worker must fail to acquire the singleton worker lock. Do not start a worker in every FastAPI reload process.
 
-The worker persists jobs in SQLite, claims one atomically, releases the transaction, runs the stage, and commits its result in a new short transaction. API requests never wait for inference. A shared worker handles analysis, knowledge indexing and draft generation serially. The queue therefore also serializes generation. Browser capture concurrency is one. Failed stages do not erase successful earlier stages.
+The worker persists jobs in SQLite, claims one atomically, releases the transaction, runs the stage, and commits its result in a new short transaction. API requests never wait for inference. Phase 6 implements analysis jobs; knowledge indexing and draft generation join the shared worker in their later modules. The queue will also serialize generation. Browser capture concurrency is one. Failed stages do not erase successful earlier stages.
 
 ## Model and package decisions
 

@@ -11,7 +11,7 @@ from app.core.hashing import content_hash
 from app.db.base import SchemaVersion
 
 MIGRATIONS_DIR = Path(__file__).parent / "migrations"
-SUPPORTED_SCHEMA_VERSION = 2
+SUPPORTED_SCHEMA_VERSION = 8
 
 
 def migrate(engine: Engine, *, require_initialized: bool = False) -> int:

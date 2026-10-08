@@ -59,12 +59,18 @@ class ArtifactStorage:
         if max_bytes < 0 or len(content) > max_bytes:
             raise ValueError("Artifact exceeds its byte limit.")
         key = f"{category}/{uuid4().hex}{suffix}"
+        return self.write_to(key, content, max_bytes=max_bytes)
+
+    def write_to(self, key: str, content: bytes, *, max_bytes: int) -> str:
+        """Publish a server-reserved key already recorded in a durable manifest."""
+        if max_bytes < 0 or len(content) > max_bytes:
+            raise ValueError("Artifact exceeds its byte limit.")
         target = self.resolve(key)
         target.parent.mkdir(parents=True, exist_ok=True)
         self.resolve(key)
         temporary: str | None = None
         try:
-            with tempfile.NamedTemporaryFile(dir=target.parent, prefix=".staged-", delete=False) as file:
+            with tempfile.NamedTemporaryFile(dir=target.parent, prefix=f".staged-{target.stem}-", delete=False) as file:
                 temporary = file.name
                 file.write(content)
                 file.flush()

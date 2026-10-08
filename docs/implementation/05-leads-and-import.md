@@ -2,11 +2,13 @@
 
 **Purpose:** accept prospect companies safely, keep campaign identity consistent and report every import row. **Requirements:** FR-07–11, DATA-01/02, PIPE-02 creation/import events; AT-02. **Dependencies:** 04. **Priority:** Must.
 
+**Status:** implemented for manual leads, CSV import, corrections/provenance, current list/detail and confirmed fact/activity deletion. See [Phase 5 walkthrough](../phase-05-leads-and-imports.md). Evidence/model/draft sections remain empty, scores null, priority Needs review. Module 06 must add active-job deletion guards; 07/11/13 must add owned artifact/result cleanup and real stale-result integration. Downstream portions of AT-02 remain deferred.
+
 ## Inputs and outputs
 
 Inputs: company_name, website, campaign; optional industry, country, employee_count, contact_name, contact_email, description and notes; UTF-8 CSV with FR-08 columns. Outputs: New leads, user-provided provenance, duplicate warnings/errors, paginated details, row-level import report and stale reasons after corrections. Unknown optional values are null.
 
-## Future files and database changes
+## Files and database changes
 
 `backend/app/models/lead.py`, `company.py`, `lead_fact.py`; `backend/app/schemas/lead.py`, `imports.py`; `backend/app/core/urls.py`; `backend/app/db/repositories/leads.py`; `backend/app/services/leads.py`, `csv_import.py`; `backend/app/api/leads.py`, `imports.py`; migration `005_leads.py`; `backend/tests/unit/test_url_identity.py`, `test_csv_validation.py`; `backend/tests/integration/test_leads.py`, `test_imports.py`.
 
@@ -15,6 +17,8 @@ Create `companies`, `leads`, `lead_facts`. Add campaign-company unique constrain
 ## Endpoints
 
 `POST/GET /leads`, `GET/PATCH/DELETE /leads/{id}`; `GET /imports/template`; `POST /campaigns/{id}/imports`. Shared API defines fields, filters and confirmation. Lead detail composes available outputs; missing later-module sections are explicit empty sections, not fabricated analysis.
+
+`GET /leads/{id}/facts` adds paginated immutable fact history. Detail responses expose current fact revisions and at most 25 recent activities with a total count. Mid-import systemic failures include the bounded 100-row report under `error.import_report`, not the generic 30-detail error list. Parsing validates the whole file before writing; each valid row commits in a short IMMEDIATE transaction, with campaign/work-preflight rechecked. This serialization plus the campaign-company unique constraint prevents duplicate races.
 
 ## Implementation steps
 

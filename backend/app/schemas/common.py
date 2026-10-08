@@ -21,6 +21,7 @@ class ErrorBody(StrictModel):
     message: str
     details: list[ErrorDetail] = Field(default_factory=list, max_length=30)
     request_id: str
+    import_report: dict | None = None
 
 
 class ErrorResponse(StrictModel):
@@ -42,3 +43,4 @@ class HealthResponse(StrictModel):
     database: DependencyHealth
     worker: DependencyHealth
     ollama: DependencyHealth
+    generation_model: DependencyHealth | None = None

@@ -23,7 +23,7 @@ build/
 dist/
 
 # Downloaded models and machine-specific editor state
-models/
+/models/
 *.gguf
 *.safetensors
 .vscode/

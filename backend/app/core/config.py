@@ -27,6 +27,15 @@ class Settings(BaseSettings):
     api_host: Literal["127.0.0.1"] = "127.0.0.1"
     api_port: int = Field(default=8000, ge=1024, le=65535)
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+    job_deadline_seconds: int = Field(default=300, ge=1, le=3600)
+    stage_deadline_seconds: int = Field(default=120, ge=1, le=300)
+    worker_poll_seconds: float = Field(default=0.5, ge=0.05, le=5)
+    saved_upload_ttl_seconds: int = Field(default=3600, ge=60, le=86400)
+    generation_model: str = Field(default='qwen2.5:3b', min_length=1, max_length=200, pattern=r'^[A-Za-z0-9_.:/-]+$')
+    nlp_context_tokens: int = Field(default=4096, ge=2048, le=32768)
+    nlp_output_tokens: int = Field(default=768, ge=256, le=2048)
+    nlp_evidence_bytes: int = Field(default=1600, ge=100, le=16000)
+    nlp_timeout_seconds: int = Field(default=110, ge=1, le=120)
     ollama_base_url: str = "http://127.0.0.1:11434"
 
     @field_validator("database_name")

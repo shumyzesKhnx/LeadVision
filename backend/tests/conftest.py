@@ -31,6 +31,7 @@ def database(settings):
 
 @pytest.fixture
 def application(settings, monkeypatch):
+    monkeypatch.setattr('app.services.model_cache.model_info', lambda settings: {'status': 'missing', 'digest': None})
     async def offline_probe(_url):
         return DependencyHealth(status="unavailable", message="Ollama is unavailable.")
 

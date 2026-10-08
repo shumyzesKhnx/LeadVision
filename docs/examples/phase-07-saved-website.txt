@@ -1,0 +1,10 @@
+Saved Evidence Demo - fictional test content
+
+This text is prepared for testing Lead Vision. It was not collected from a real company's website.
+
+Saved Evidence Demo provides software development and website design services.
+Its example location is Lahore, Pakistan.
+The example team builds web applications and helps businesses maintain their websites.
+
+This fixture contains no verified employee count, contact details or customer claims.
+Keep the original collection time blank because this file has no real collection timestamp.

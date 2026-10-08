@@ -19,7 +19,7 @@ def test_runtime_probe_accepts_valid_tags_without_claiming_model_readiness(monke
     install_transport(monkeypatch, lambda request: httpx.Response(200, json={"models": []}))
     result = asyncio.run(probe_ollama("http://127.0.0.1:11434"))
     assert result.status == "available"
-    assert "implemented later" in result.message
+    assert "separately" in result.message
 
 
 @pytest.mark.parametrize("response", [

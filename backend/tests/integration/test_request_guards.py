@@ -11,7 +11,7 @@ def test_health_and_swagger_work_without_models(client):
     assert body["schema_version"] == SUPPORTED_SCHEMA_VERSION
     assert body["database"]["status"] == "ready"
     assert body["ollama"]["status"] == "unavailable"
-    assert body["worker"]["status"] == "not_implemented"
+    assert body["worker"]["status"] == "unavailable"
     assert "data_dir" not in response.text
     assert client.get("/docs").status_code == 200
     assert "/api/v1/health" in client.get("/openapi.json").json()["paths"]

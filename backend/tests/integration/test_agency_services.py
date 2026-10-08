@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from app.core.errors import AppError
 from app.core.hashing import content_hash
 from app.db.base import SchemaVersion
-from app.db.migration_runner import MIGRATIONS_DIR, migrate
+from app.db.migration_runner import MIGRATIONS_DIR, SUPPORTED_SCHEMA_VERSION, migrate
 from app.db.session import Database
 from app.main import create_app
 from app.models.activity import Activity
@@ -246,12 +246,12 @@ def test_upgrade_preserves_legacy_events_cleanup_links_and_maintenance(settings,
             with pytest.raises(IntegrityError):
                 migrate(database.engine)
         else:
-            assert migrate(database.engine) == 2
+            assert migrate(database.engine) == SUPPORTED_SCHEMA_VERSION
         with database.engine.connect() as connection:
             assert connection.exec_driver_sql("SELECT action FROM activities WHERE id='event-1'").scalar_one() == "legacy.event"
             assert connection.exec_driver_sql("SELECT activity_id FROM file_cleanup_tasks WHERE id='task-1'").scalar_one() == "event-1"
             assert connection.exec_driver_sql("SELECT maintenance_reason FROM worker_state").scalar_one() == "Existing backup"
             assert connection.exec_driver_sql("PRAGMA foreign_key_check").first() is None
-            assert connection.exec_driver_sql("SELECT max(version) FROM schema_versions").scalar_one() == (1 if orphan_agency else 2)
+            assert connection.exec_driver_sql("SELECT max(version) FROM schema_versions").scalar_one() == (1 if orphan_agency else SUPPORTED_SCHEMA_VERSION)
     finally:
         database.close()

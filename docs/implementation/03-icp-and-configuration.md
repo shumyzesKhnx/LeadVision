@@ -2,11 +2,13 @@
 
 **Purpose:** define desired customers and preserve the exact rules used by each analysis. **Requirements:** FR-03–05; SCORE-01–04 configuration; DATA-02; SEM-03/04 input changes. **Dependencies:** 02. **Priority:** Must.
 
+**Status:** implemented for profile/configuration storage; see [Phase 3 walkthrough](../phase-03-customer-profiles.md). Module 04 now provides actual affected-campaign counts. Affected-result counts and stale-result integration follow when modules 06/10/11 create those records. This phase provides immutable version IDs, configuration hashes, semantic-input hashes and a currentness helper.
+
 ## Inputs and outputs
 
 Inputs: name, target description, optional canonical industries/countries/regions, size bounds, structured exclusions, desired service needs, free text preferences, weights and thresholds. Outputs: ICP with immutable version history, validated configuration, eligible component set and affected-result stale markers.
 
-## Future files and database changes
+## Files and database changes
 
 `backend/app/models/icp.py`; `backend/app/schemas/icp.py`, `scoring_config.py`; `backend/app/db/repositories/icp.py`; `backend/app/services/icp.py`, `freshness.py`, `criteria.py`; `backend/app/api/icps.py`; migration `003_icps.py`; `backend/tests/unit/test_scoring_config.py`; `backend/tests/integration/test_icp_versions.py`.
 
@@ -15,6 +17,8 @@ Create `icps` and `icp_versions`. Versions hold criteria, weights, thresholds, r
 ## Endpoints
 
 `GET/POST /icps`, `GET/PATCH /icps/{id}`, `GET /icps/{id}/versions`. Create/edit payload is defined in shared API contracts. Archiving uses PATCH; there is no hard-delete history route. Config edit returns new version and count of affected campaigns/results.
+
+`GET /icps/options` also supplies supported countries, explicit region sets and industry synonyms. Nested PATCH objects replace complete objects; absent members take defaults. Response configuration is under `current_version.config`. Campaign counts are implemented in module 04; result counts remain zero until result integration exists.
 
 ## Implementation steps
 

@@ -1,16 +1,26 @@
 {
   "manifest_version": 1,
-  "status": "candidates_only_not_downloaded_or_benchmarked",
+  "status": "generation_installed_two_fixture_trial_checked_other_roles_candidates_only",
   "models": [
     {
       "role": "generation",
-      "candidate_id": "qwen2.5:1.5b",
-      "source": "https://ollama.com/library/qwen2.5:1.5b",
-      "candidate_license": "Apache-2.0",
-      "verified_download_license": null,
-      "digest": null,
-      "download_bytes": null,
-      "benchmark_module": "08"
+      "candidate_id": "qwen2.5:3b",
+      "source": "https://ollama.com/library/qwen2.5:3b",
+      "candidate_license": "Qwen Research License",
+      "verified_download_license": "Qwen Research License; verified from installed Ollama /api/show",
+      "digest": "357c53fb659c5076de1d65ccb0b397446227b71a42be9d1603d46168015c9e4b",
+      "download_bytes": 1929912432,
+      "benchmark_module": "08",
+      "license_sha256": "b5c0e5cf74cf51af1ecbc4af597cfcd13fd9925611838884a681070838a14a50",
+      "installation_origin": "Already installed by user; no model downloaded during Phase 8",
+      "quantization": "Q4_K_M",
+      "evaluation": {
+        "scope": "Two synthetic saved-text fixtures, including embedded instructions; broader quality and peak RAM assessment pending",
+        "first_fixture_seconds": 15.484,
+        "second_fixture_seconds": 10.659,
+        "peak_model_ram_bytes": null,
+        "date": "2026-10-09"
+      }
     },
     {
       "role": "embedding",

@@ -2,11 +2,13 @@
 
 **Purpose:** group leads around an ICP without losing previous results when targeting changes. **Requirements:** FR-06, FR-05, DATA-01/02; AT-01. **Dependencies:** 03. **Priority:** Must.
 
+**Status:** campaign management implemented; see [Phase 4 walkthrough](../phase-04-campaigns.md). Leads/jobs/scores/dashboard acceptance is completed in their owning later modules. Shared preflight/currentness helpers are implemented without claiming those future workflows exist.
+
 ## Inputs and outputs
 
 Inputs: required campaign name, selected active ICP, optional description, archive/reactivation action. Outputs: campaign records with workspace/ICP references, current configuration label, historical lead count and stale-result counts.
 
-## Future files and database changes
+## Files and database changes
 
 `backend/app/models/campaign.py`; `backend/app/schemas/campaign.py`; `backend/app/db/repositories/campaign.py`; `backend/app/services/campaign.py`; `backend/app/api/campaigns.py`; migration `004_campaigns.py`; `backend/tests/integration/test_campaigns.py`.
 
@@ -28,6 +30,8 @@ Create `campaigns`; add activity campaign FK. Use RESTRICT for agency and ICP re
 ## Errors and recovery
 
 Missing ICP: `404 ICP_NOT_FOUND`; wrong-workspace or archived ICP: `409 ICP_UNAVAILABLE`; blank name: field-specific `422`. Active job handling follows shared design: queued analysis does not start after archive, already-running historical work can finish with currentness checked. Reject stale edits with `409 EDIT_CONFLICT`.
+
+Implemented ownership lookup returns the same `404 ICP_NOT_FOUND` for missing/foreign-workspace IDs; it does not reveal another workspace's records. Archived ICPs return `409 ICP_UNAVAILABLE`. No-op edits keep their revision. Reactivation requires an active ICP. Campaign FK ownership is also enforced by `(agency_id,icp_id)` referencing `(icps.agency_id,icps.id)`.
 
 ## Tests and acceptance criteria
 

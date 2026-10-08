@@ -34,3 +34,9 @@ Create `jobs`, `job_stages`, `analysis_runs`, active-lead partial unique indexes
 ## Tests and acceptance criteria
 
 Concurrent same-key requests return one job; different body under same key conflicts. Different keys for one active lead do not create competing runs. Kill worker during inference, restart, verify old run failed/interrupted and new retry has a different run ID. Queued changed inputs fail rather than run old data silently. Cancel after text stage retains text. Inject downstream failure and verify partial state. Duplicate stage persistence creates one activity. Run CRUD while fake slow processing runs and verify no long write transaction. AT-11 covers these behaviors; measured timings belong to module 19.
+
+## Implemented phase 6
+
+Migration 006, the six endpoints, worker command, singleton OS lock, queue, cancellation, retry, immutable input snapshots and run history are implemented. See [the practical walkthrough](../phase-06-jobs-and-workflow.md). Saved-upload token consumption joins in 07; model/prompt and embedding-version pins join in 08/10 when those resources exist. Their current snapshot values explicitly say not configured. Generation/index job kinds need later migrations.
+
+Processing budgets default to 300 seconds per job and 120 seconds per stage attempt, with at most one automatic retry for an explicitly transient failure. Deadlines and cancellation are cooperative: handlers must use context checkpoints and bounded I/O. Arbitrary non-cooperative Python cannot be forcibly stopped safely; ownership is never transferred while that worker still holds its OS lock. Tests inject fake handlers only; production implements input validation and fails honestly on missing later handlers.

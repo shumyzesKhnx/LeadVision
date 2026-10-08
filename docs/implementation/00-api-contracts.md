@@ -1,6 +1,6 @@
 # Shared API contracts
 
-All paths below start with `/api/v1`. Serve static HTML separately at `/`. Swagger at `/docs` must support the core flow before the browser UI exists. Health, agency and service routes are implemented; the remaining routes are planned contracts.
+All paths below start with `/api/v1`. Serve static HTML separately at `/`. Swagger at `/docs` must support the core flow before the browser UI exists. Health, agency, service, ICP, campaign and lead/CSV, job, analysis-run, saved-evidence, review and artifact routes are implemented; processing/scoring/artifact integration remains planned.
 
 ## Conventions
 
@@ -38,10 +38,15 @@ Worker errors add `stage` and `retryable` inside bounded details. API and poll r
 | 03 | `GET /icps`; `POST /icps` | name, target_text, criteria, exclusions, desired_needs, weights, thresholds | ICP plus current version |
 | 03 | `GET /icps/{id}`; `PATCH /icps/{id}` | edit fields, archived optional, If-Match | new immutable version if analytical config changed |
 | 03 | `GET /icps/{id}/versions` | pagination | immutable history |
+| 03 | `GET /icps/options` | none | supported ISO country codes, explicit region sets and industry synonyms |
 | 04 | `GET /campaigns`; `POST /campaigns` | name, icp_id, description optional | campaign with agency_id resolved from singleton |
 | 04 | `GET /campaigns/{id}`; `PATCH /campaigns/{id}` | name/description/icp_id/archived, If-Match | campaign and count of affected stale leads |
 
 ICP criteria use arrays of canonical industry labels and ISO country codes, optional explicit region definitions mapped to countries, `employee_min` and `employee_max`. Exclusions are `{industries:[], countries:[]}` and optional size rules with explicit bounds; free text goes in `preferences_text` and is never parsed into a hard rule. Default weights are `{industry:25, geography:20, size:15, semantic:40, visual:0}`. Thresholds are `{high:75, medium:50, minimum_coverage:0.6}`. Validate `0<=medium<high<=100`, `0<=minimum_coverage<=1` and all eligible weights. Visual activation requires calibration ID and a new configuration version.
+
+Implemented region presets are `uk`, `eu`, `north_america` and `gcc`; `/icps/options` is the authority for each saved preset's country set. `UK` canonicalizes to `GB`. Industry labels use case/space normalization and the documented synonym map. A supplied nested ICP PATCH object replaces that object; absent members use its defaults. Required top-level objects cannot be null; nested employee bounds can be null. ICP responses include `current_version` with the complete `config`, content/semantic hashes and rule version, `eligible_components`, `resolved_countries` and per-operation `invalidation`. History is newest first. Semantic-input hashes cover target text, desired needs and preferences. Structured criteria/exclusions affect score hashes; weights-only changes can reuse compatible semantic inputs. Visual activation is rejected until reviewed calibration exists. Analytical edits and archive changes now report actual linked campaign counts; result counts remain zero until processing/scoring integration exists.
+
+Campaign lists default to unarchived records; use `include_archived=true` to include history. Responses include selected `icp_name`, current ICP version ID/number, `analysis_allowed`, nullable `analysis_blocked_reason`, `lead_count` and per-operation `invalidation` with `targeting_changed`/`affected_leads`. Phase 5 now reports actual lead counts and affected leads on an ICP switch; affected score/result counts remain deferred. `analysis_allowed` describes campaign/ICP selection readiness, not worker availability. A selected ICP's later version change updates the campaign summary without increasing the campaign edit revision. Campaign edits require If-Match; creating/switching/reactivating requires an active same-workspace ICP. Name/description edits and archive remain possible for historical campaigns with archived ICPs. Missing/foreign-workspace IDs use indistinguishable 404 responses. Future import/job preflight must call the shared work guard and future result currentness must compare saved campaign/ICP/version identities.
 
 ## Lead and evidence endpoints
 
@@ -50,15 +55,18 @@ ICP criteria use arrays of canonical industry labels and ISO country codes, opti
 | 05 | `POST /leads` | company_name, website, campaign_id; optional fields from FR-07 | 201 lead, provenance and possible-name-duplicate warning |
 | 05 | `GET /leads` | campaign_id, pipeline_state, priority, q, sort=`score`/`created_at`, direction, pagination | lead rows with latest score, coverage, currentness and processing status |
 | 05 | `GET /leads/{id}`; `PATCH /leads/{id}` | correction fields/notes, If-Match, optional correction_reason | detail / edited lead with stale reasons |
+| 05 | `GET /leads/{id}/facts` | pagination | append-only entered fact history, newest first |
 | 05 | `DELETE /leads/{id}?confirm=true` | If-Match | 204 or 202 cleanup pending; 409 while a job is active |
 | 05 | `GET /imports/template` | none | CSV attachment with FR-08 column names |
 | 05 | `POST /campaigns/{id}/imports` | multipart `file` UTF-8 CSV | row results and accepted/duplicate/invalid totals |
-| 07 | `POST /leads/{id}/saved-evidence` | multipart `text` or TXT, image optional, source_type cached/uploaded, original_url, collected_at optional | validated opaque `upload_token`, hashes, warnings, expiry; no analysis yet |
+| 07 | `POST /leads/{id}/saved-evidence` | multipart text_file (.txt) and/or image_file (PNG/JPEG), source_mode cached/uploaded, original_url, collected_at and title optional | 201 opaque upload_token, component availability, warnings, import/expiry time; no analysis yet |
 | 07 | `GET /runs/{id}/evidence` | pagination | evidence records with labels and opaque artifact URLs |
-| 07 | `GET /artifacts/{evidence_id}/image?variant=original\|thumbnail` | owned screenshot evidence ID | validated image stream; never arbitrary local path |
+| 07 | `GET /artifacts/{evidence_id}/image` and `/thumbnail` | owned screenshot evidence ID | validated image stream; never arbitrary local path |
 | 07 | `PATCH /evidence/{id}/review` | usable boolean, required reason when unusable, If-Match | evidence review and dependent stale reasons |
 
-CSV line numbers start at 2 for first data row. Row result: `{row, status:"accepted"|"duplicate"|"invalid"|"not_processed", lead_id, errors, warnings}`. Normal validation results use the first three states. File-level validation failures import zero rows. A database/systemic error is not mislabelled as a bad CSV row: halt remaining rows, use not_processed for them, and include committed-row results and all four totals in the safe error details.
+CSV record numbers start at 2 after the header; empty separator lines are ignored and quoted multiline records count once. Row result: `{row, status:"accepted"|"duplicate"|"invalid"|"not_processed", lead_id, errors, warnings}`. Normal validation results use the first three states. Successful report: `{items,accepted,duplicate,invalid,not_processed,warnings}`. File-level validation failures import zero rows. A database/systemic error is not mislabelled as a bad CSV row: halt remaining rows, use not_processed for them, and include committed-row results/all four totals in `error.import_report` (up to 100 rows), alongside the standard safe error fields. A mid-file stop returns 503; preflight archive/ICP failures return their normal 409 before writing. Uploads are streamed with a file cap of 5,000,000 bytes and multipart-request cap of that size plus 65,536 bytes. Unknown columns are ignored with a warning, optional empty cells omitted, and header names trimmed/lowercased. Each accepted row has its own short IMMEDIATE transaction with campaign/ICP preflight rechecked.
+
+Current lead responses retain original/normalized website/domain, analytical input revision, New pipeline state, current user-provided facts and optional name-duplicate warnings. Detail adds latest provenance, 25 recent activities and their total; older facts use the paginated history endpoint. Scores are null, priority Needs review, processing not_started and downstream output sections empty until their modules exist. While all scores are null, score ordering falls back to creation time/ID. Corrections append facts and increment analytical input revision only for company_name/website/industry/country/employee_count/description; contacts/notes still increment edit revision. Campaign reassignment and pipeline state cannot be supplied through lead PATCH. Deletion currently returns 204, cascades facts/lead activities, retains a campaign deletion event and removes a company identity only when no leads reference it. Module 06 adds active-job checks; later artifact/result modules must extend deletion ordering/cleanup before their records are available.
 
 ## Jobs, analyses and scores
 
@@ -107,3 +115,9 @@ Regeneration uses a new outreach job key and creates a new draft series. For the
 | 01 | `GET /health` | none | DB, worker, configured runtime readiness; no absolute paths or secrets |
 
 ML experiments have no production endpoint. n8n uses the existing analysis and poll endpoints. Backup/restore is a local command workflow, not an unrestricted API filesystem operation.
+
+Phase 6 availability: live requests can be queued when the worker is available, but unbuilt processing handlers fail STAGE_NOT_IMPLEMENTED. Cached/uploaded modes now attach validated saved uploads in module 07. They acquire usable evidence and become partial at the unbuilt NLP stage. Receipts return job_id, run_id, status and poll_url; replay uses HTTP 202 even for a terminal original job. Lead responses include processing_status and latest_job_id. Run is_current describes input currentness, independently of job success.
+
+Phase 7 saved upload tokens are scoped to a lead and source mode. An unconsumed token expires after one hour by default; attached evidence can be reused by retry of its owning job. Tokens are attached in the job/run/activity transaction, and idempotency replay comes first. Supporting-page selection is unavailable in saved mode. A malformed image with valid text produces an image warning; oversized request/file byte counts return 413. Image/thumbnail responses verify hashes and use no-store/nosniff. Lead deletion returns 202 with {deleted:true,cleanup:{state:pending,tasks:N}} when file cleanup is queued, otherwise 204.
+
+Phase 8: GET /runs/{id} now includes nullable business_analysis with result/provenance. Results use summary plus summary_sources, optional industry/employee_count, cited products/markets and explicitly hypothetical opportunities. Logical website_text citations map through provenance.sources to an owned evidence ID. Manual sources use manual:<field>. Every interpretation remains review-required and does not edit leads. GET /health includes generation_model separately from process-level ollama readiness. Saved jobs reach visual_metrics after NLP; CV remains unbuilt.
