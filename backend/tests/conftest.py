@@ -6,16 +6,16 @@ from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.core.config import Settings
-from app.db.migration_runner import migrate
-from app.db.session import Database
+from app.modules.foundation.config import Settings
+from app.modules.foundation.migration_runner import migrate
+from app.modules.foundation.database_session import Database
 from app.main import create_app
-from app.schemas.common import DependencyHealth
+from app.modules.foundation.common_schema import DependencyHealth
 
 
 @pytest.fixture
 def settings(tmp_path):
-    return Settings(_env_file=None, data_dir=tmp_path / "data", sqlite_busy_timeout_ms=20)
+    return Settings(_env_file=None, data_dir=tmp_path / "data", embedding_model_dir=tmp_path / 'models', sqlite_busy_timeout_ms=20)
 
 
 @pytest.fixture
@@ -31,11 +31,14 @@ def database(settings):
 
 @pytest.fixture
 def application(settings, monkeypatch):
-    monkeypatch.setattr('app.services.model_cache.model_info', lambda settings: {'status': 'missing', 'digest': None})
+    from app.modules.processing.workflow_service import StageFailure
+    def offline_destination(url): raise StageFailure('DNS_FAILURE')
+    monkeypatch.setattr('app.modules.evidence.safe_http_client.destination', offline_destination)
+    monkeypatch.setattr('app.modules.nlp.model_cache_service.model_info', lambda settings: {'status': 'missing', 'digest': None})
     async def offline_probe(_url):
         return DependencyHealth(status="unavailable", message="Ollama is unavailable.")
 
-    monkeypatch.setattr("app.api.health.probe_ollama", offline_probe)
+    monkeypatch.setattr("app.modules.foundation.health_api.probe_ollama", offline_probe)
     return create_app(settings)
 
 

@@ -4,13 +4,13 @@ from threading import Event, Thread
 import time
 import pytest
 from sqlalchemy import select, func
-from app.core.config import BACKEND_ROOT, PROJECT_ROOT
-from app.models.activity import Activity
-from app.models.maintenance import WorkerState
-from app.services.workflow import StageResult, STAGES
-from app.services.maintenance import set_maintenance
-from app.worker.main import Worker
-from app.worker.lock import WorkerAlreadyRunning
+from app.modules.foundation.config import BACKEND_ROOT, PROJECT_ROOT
+from app.modules.processing.activity_model import Activity
+from app.modules.foundation.maintenance_model import WorkerState
+from app.modules.processing.workflow_service import StageResult, STAGES
+from app.modules.foundation.maintenance_service import set_maintenance
+from app.modules.processing.worker_main import Worker
+from app.modules.processing.worker_lock import WorkerAlreadyRunning
 from test_job_idempotency import queue
 
 
@@ -20,7 +20,7 @@ def test_second_worker_is_rejected_even_with_old_heartbeat(client, application, 
     with pytest.raises(WorkerAlreadyRunning):
         with Worker(application.state.database, settings):
             pass
-    child = subprocess.run([str(PROJECT_ROOT / '.venv/Scripts/python.exe'), '-m', 'app.worker.main'],
+    child = subprocess.run([str(PROJECT_ROOT / '.venv/Scripts/python.exe'), '-m', 'app.modules.processing.worker_main'],
                            cwd=BACKEND_ROOT, env={**os.environ, 'LEADVISION_DATA_DIR': str(settings.data_dir)},
                            capture_output=True, timeout=10)
     assert child.returncode == 1
@@ -62,7 +62,7 @@ def test_crud_poll_and_cancel_work_during_slow_stage(client, job_lead, applicati
 
 
 def test_stage_save_deduplicates_activity_and_maintenance_pauses_claim(client, job_lead, application, settings):
-    from app.worker.queue import claim_next
+    from app.modules.processing.worker_queue import claim_next
     with Worker(application.state.database, settings) as worker:
         queued = queue(client, job_lead).json()
         with application.state.database.transaction(immediate=True) as session:

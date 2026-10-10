@@ -43,14 +43,14 @@ For your own saved evidence, copy visible website text into a UTF-8 `.txt` file 
 
 | File/folder | Purpose |
 |---|---|
-| `backend/app/api/evidence.py` | Upload, view evidence and review usability |
-| `backend/app/api/artifacts.py` | Safely return owned original images and thumbnails |
-| `backend/app/services/evidence.py` | Save manifests, attach tokens, run acquisition stages and clean files |
-| `backend/app/services/text_extraction.py` | Validate and bound saved readable text |
-| `backend/app/services/image_validation.py` | Validate images and create thumbnails |
-| `backend/app/models/evidence.py` | Upload ownership, provenance and review records |
-| `backend/app/schemas/evidence.py` | Validate metadata/reviews and define responses |
-| `backend/app/db/migrations/007_evidence.py` | Add evidence tables and immutable-source constraints |
+| `backend/app/modules/evidence/evidence_api.py` | Upload, view evidence and review usability |
+| `backend/app/modules/evidence/artifacts_api.py` | Safely return owned original images and thumbnails |
+| `backend/app/modules/evidence/evidence_service.py` | Save manifests, attach tokens, run acquisition stages and clean files |
+| `backend/app/modules/evidence/text_extraction_service.py` | Validate and bound saved readable text |
+| `backend/app/modules/evidence/image_validation_service.py` | Validate images and create thumbnails |
+| `backend/app/modules/evidence/evidence_model.py` | Upload ownership, provenance and review records |
+| `backend/app/modules/evidence/evidence_schema.py` | Validate metadata/reviews and define responses |
+| `backend/app/modules/foundation/007_evidence.py` | Add evidence tables and immutable-source constraints |
 | `backend/tests/unit/test_images.py` | File limits, image formats, orientation, animation and pixel safety |
 | `backend/tests/integration/test_saved_evidence.py` | Upload, restart, token rules, review, integrity and cleanup checks |
 | `backend/tests/integration/test_evidence_migration.py` | Existing-data preservation and failed-upgrade rollback |

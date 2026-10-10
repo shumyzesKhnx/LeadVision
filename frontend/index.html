@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#12251e">
+  <title>Lead Vision · Workspace</title>
+  <link rel="stylesheet" href="/assets/shared/styles/app.css">
+  <script type="module" src="/assets/app.js"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="#overview"><span class="brand-mark">LV</span><span>Lead Vision<small>YOUR RESEARCH WORKSPACE</small></span></a>
+    <div class="nav-label">WORKSPACE</div>
+    <nav aria-label="Main navigation">
+      <a href="#overview">Overview <span>01</span></a>
+      <a href="#agency">Agency & services <span>02</span></a>
+      <a href="#profiles">Customer profiles <span>03</span></a>
+      <a href="#campaigns">Campaigns <span>04</span></a>
+      <a href="#leads">Companies & research <span>05</span></a>
+      <a href="#knowledge">Agency knowledge <span>06</span></a>
+    </nav>
+    <div class="nav-label">UNDERSTAND THE SYSTEM</div>
+    <nav aria-label="Help"><a href="#flow">How it works <span>↗</span></a></nav>
+    <div class="sidebar-foot"><span class="dot"></span> Local workspace<small>Your records stay on this computer.</small><a href="/docs" target="_blank" rel="noopener">Open API documentation ↗</a></div>
+  </aside>
+  <main>
+    <header class="topbar"><span>Workspace / <span id="location">Overview</span></span><button id="refresh" class="quiet">Refresh data ↻</button></header>
+    <div id="notice" role="status" aria-live="polite"></div>
+    <div id="content" aria-live="polite"><p class="loading">Opening your workspace…</p></div>
+    <footer>LEAD VISION <span>Evidence first. Clear decisions.</span></footer>
+  </main>
+  <dialog id="dialog"><div id="dialog-body"></div></dialog>
+</body>
+</html>

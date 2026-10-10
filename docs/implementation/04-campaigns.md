@@ -10,7 +10,7 @@ Inputs: required campaign name, selected active ICP, optional description, archi
 
 ## Files and database changes
 
-`backend/app/models/campaign.py`; `backend/app/schemas/campaign.py`; `backend/app/db/repositories/campaign.py`; `backend/app/services/campaign.py`; `backend/app/api/campaigns.py`; migration `004_campaigns.py`; `backend/tests/integration/test_campaigns.py`.
+`backend/app/modules/campaigns/campaign_model.py`; `backend/app/modules/campaigns/campaign_schema.py`; `backend/app/modules/campaigns/campaign_repository.py`; `backend/app/modules/campaigns/campaign_service.py`; `backend/app/modules/campaigns/campaigns_api.py`; migration `004_campaigns.py`; `backend/tests/integration/test_campaigns.py`.
 
 Create `campaigns`; add activity campaign FK. Use RESTRICT for agency and ICP references, not cascading history deletion. New runs snapshot the selected ICP's current version; campaigns do not overwrite old run versions.
 

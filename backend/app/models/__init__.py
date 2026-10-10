@@ -1,1 +1,0 @@
-"""SQLAlchemy database records."""

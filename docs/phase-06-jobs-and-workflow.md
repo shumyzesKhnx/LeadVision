@@ -48,12 +48,12 @@ The `202` response contains `job_id`, `run_id` and `poll_url`. Copy `job_id` int
 
 | Files | Purpose |
 |---|---|
-| `backend/app/api/jobs.py`, `runs.py` | Submit, poll, cancel, retry and view attempts |
-| `backend/app/services/jobs.py`, `workflow.py` | Request rules, saved inputs and stage contracts |
-| `backend/app/models/job.py`, `analysis_run.py` | Job, stage and attempt database definitions |
-| `backend/app/db/migrations/006_jobs_runs.py` | Adds phase-6 tables without removing earlier data |
-| `backend/app/db/repositories/jobs.py` | Reads jobs and history |
-| `backend/app/worker/` | Queue, singleton lock, execution and restart recovery |
+| `backend/app/modules/processing/jobs_api.py`, `runs.py` | Submit, poll, cancel, retry and view attempts |
+| `backend/app/modules/processing/jobs_service.py`, `workflow.py` | Request rules, saved inputs and stage contracts |
+| `backend/app/modules/processing/job_model.py`, `analysis_run.py` | Job, stage and attempt database definitions |
+| `backend/app/modules/foundation/006_jobs_runs.py` | Adds phase-6 tables without removing earlier data |
+| `backend/app/modules/processing/jobs_repository.py` | Reads jobs and history |
+| `backend/app/modules/processing/` | Queue, singleton lock, execution and restart recovery |
 | `scripts/worker.ps1` | Starts the separate worker |
 | `backend/tests/integration/test_job_*.py`, `test_worker_concurrency.py` | Checks duplicates, retries, cancellation, recovery and worker concurrency |
 

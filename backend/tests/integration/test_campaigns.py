@@ -10,18 +10,18 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, inspect, insert, select
 from sqlalchemy.exc import IntegrityError
 
-from app.core.errors import AppError
-from app.core.hashing import content_hash
-from app.db.base import SchemaVersion
-from app.db.migration_runner import MIGRATIONS_DIR, SUPPORTED_SCHEMA_VERSION, migrate
-from app.db.session import Database
+from app.modules.foundation.errors import AppError
+from app.modules.foundation.hashing import content_hash
+from app.modules.foundation.database_base import SchemaVersion
+from app.modules.foundation.migration_runner import MIGRATIONS_DIR, SUPPORTED_SCHEMA_VERSION, migrate
+from app.modules.foundation.database_session import Database
 from app.main import create_app
-from app.models.campaign import Campaign
-from app.models.activity import Activity
-from app.schemas.icp import CREATE_EXAMPLE
-from app.services.campaign import require_campaign
-from app.services.icp import require_icp
-from app.services.freshness import campaign_configuration_is_current
+from app.modules.campaigns.campaign_model import Campaign
+from app.modules.processing.activity_model import Activity
+from app.modules.icp.icp_schema import CREATE_EXAMPLE
+from app.modules.campaigns.campaign_service import require_campaign
+from app.modules.icp.icp_service import require_icp
+from app.modules.processing.freshness_service import campaign_configuration_is_current
 
 
 def setup_icp(client):
@@ -163,7 +163,7 @@ def test_failed_activity_rolls_back_create_and_edit(client, application, monkeyp
     campaign = create_campaign(client, profile)
     def fail(*args, **kwargs):
         raise RuntimeError('Injected activity failure')
-    monkeypatch.setattr('app.services.campaign.record_activity', fail)
+    monkeypatch.setattr('app.modules.campaigns.campaign_service.record_activity', fail)
     assert patch(client, campaign, {'archived': True}).status_code == 500
     assert client.get(f"/api/v1/campaigns/{campaign['id']}").json() == campaign
     assert client.post('/api/v1/campaigns', json={'name': 'Rollback', 'icp_id': profile['id']}).status_code == 500
@@ -211,13 +211,13 @@ def test_upgrade_keeps_activity_cleanup_links_and_rolls_back_orphan(settings, or
         with db.engine.begin() as connection:
             SchemaVersion.__table__.create(connection)
             for number, name in [(1, '001_foundation'), (2, '002_agency_services'), (3, '003_icps')]:
-                importlib.import_module('app.db.migrations.' + name).upgrade(connection)
+                importlib.import_module('app.modules.foundation.' + name).upgrade(connection)
                 checksum = content_hash((MIGRATIONS_DIR / (name + '.py')).read_text(encoding='utf-8').encode())
                 connection.execute(insert(SchemaVersion).values(version=number, checksum=checksum, applied_at='time'))
             connection.exec_driver_sql("INSERT INTO activities (id,campaign_id,action,origin,created_at) VALUES ('event',?,'legacy','api','time')", ('missing' if orphan else None,))
             connection.exec_driver_sql("INSERT INTO file_cleanup_tasks(id,artifact_key,reason,state,attempts,created_at,activity_id) VALUES('cleanup','evidence/x.txt','test','pending',0,'time','event')")
         if orphan:
-            with pytest.raises(IntegrityError):
+            with pytest.raises((IntegrityError, RuntimeError), match="(?i)foreign key"):
                 migrate(db.engine)
             assert 'campaigns' not in inspect(db.engine).get_table_names()
         else:

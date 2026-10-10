@@ -4,7 +4,7 @@ import subprocess
 
 import pytest
 
-from app.core.storage import ArtifactStorage, UnsafeStoragePath
+from app.modules.foundation.storage import ArtifactStorage, UnsafeStoragePath
 
 
 @pytest.fixture

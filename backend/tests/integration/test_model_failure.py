@@ -2,11 +2,11 @@ import json
 import pytest
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
-from app.models.business_analysis import BusinessAnalysis, ModelDiagnostic
-from app.services.workflow import StageFailure, StageResult
-from app.worker.main import Worker
-from app.services import model_cache
-from app.integrations import ollama_client
+from app.modules.nlp.business_analysis_model import BusinessAnalysis, ModelDiagnostic
+from app.modules.processing.workflow_service import StageFailure, StageResult
+from app.modules.processing.worker_main import Worker
+from app.modules.nlp import model_cache_service as model_cache
+from app.modules.nlp import ollama_client
 from test_saved_evidence import upload, submit
 TEXT = 'CloudBooks provides accounting software to small businesses.'
 
@@ -41,7 +41,7 @@ def test_nlp_source_linked_result_cache_and_no_lead_overwrite(client, job_lead, 
     run = client.get('/api/v1/runs/' + job['run_id']).json()
     assert run['business_analysis']['result']['employee_count'] is None
     assert run['business_analysis']['provenance']['model']['digest'] == 'a' * 64
-    assert run['job']['errors'][0]['stage'] == 'visual_metrics'
+    assert run['job']['errors'] == [] and run['score_result']['score'] is None
     assert client.get('/api/v1/leads/' + job_lead['id']).json()['revision'] == 1
     retried = client.post('/api/v1/jobs/' + job['job_id'] + '/retry', json={}, headers={'Idempotency-Key': 'retry'}).json()
     worker.run_once()
@@ -80,6 +80,18 @@ def test_transport_retry_and_repair_share_two_call_budget(client, job_lead, nlp_
     assert any(error['code'] == 'MODEL_OUTPUT_INVALID' for error in client.get(job['poll_url']).json()['errors'])
 
 
+def test_repair_transport_failure_does_not_create_a_third_call(client, job_lead, nlp_worker, monkeypatch):
+    worker, calls = nlp_worker
+    def response(context, payload):
+        calls.append(payload)
+        if len(calls) == 1: return '{}', {}
+        raise StageFailure('MODEL_TIMEOUT', retryable=True)
+    monkeypatch.setattr(ollama_client, 'generate', response)
+    job = request(client, job_lead); worker.run_once()
+    assert len(calls) == 2
+    assert any(error['code'] == 'MODEL_TIMEOUT' for error in client.get(job['poll_url']).json()['errors'])
+
+
 def test_successful_repair_is_recorded(client, job_lead, nlp_worker, monkeypatch):
     worker, calls = nlp_worker
     def response(context, payload):
@@ -89,6 +101,75 @@ def test_successful_repair_is_recorded(client, job_lead, nlp_worker, monkeypatch
     job = request(client, job_lead); worker.run_once()
     polled = client.get(job['poll_url']).json()
     assert len(calls) == 2 and 'MODEL_OUTPUT_REPAIRED' in polled['warnings']
+
+
+def test_missing_market_reference_gets_targeted_correction(client, job_lead, nlp_worker, monkeypatch):
+    worker, calls = nlp_worker
+    data = valid_output()
+    data['markets'] = [{'value': 'small businesses', 'source_id': 'website_text', 'quote': TEXT}]
+    data['opportunities'] = [{'description': 'Possible software integration',
+                              'observation_ids': ['market:1'], 'hypothesis': True}]
+    def response(context, payload):
+        calls.append(payload)
+        if len(calls) == 1:
+            return json.dumps(data), {}
+        assert 'OBSERVATION_REFERENCE_INVALID' in payload['prompt']
+        allowed = payload['format']['$defs']['Opportunity']['properties']['observation_ids']['items']['enum']
+        assert 'market:0' in allowed and 'market:1' not in allowed
+        data['opportunities'][0]['observation_ids'] = ['market:0']
+        return json.dumps(data), {}
+    monkeypatch.setattr(ollama_client, 'generate', response)
+    job = request(client, job_lead); worker.run_once()
+    run = client.get('/api/v1/runs/' + job['run_id']).json()
+    assert len(calls) == 2 and run['business_analysis'] is not None
+    assert run['business_analysis']['result']['opportunities'][0]['observation_ids'] == ['market:0']
+    assert 'MODEL_OUTPUT_REPAIRED' in run['job']['warnings']
+
+
+def test_correction_does_not_accept_unsupported_quotes(client, job_lead, nlp_worker, monkeypatch):
+    worker, calls = nlp_worker
+    data = valid_output()
+    data['summary_sources'][0]['quote'] = 'PRIVATE_REJECTED_TEXT'
+    def response(context, payload):
+        calls.append(payload)
+        if len(calls) == 2:
+            assert 'SOURCE_REFERENCE_INVALID' in payload['prompt']
+            assert 'PRIVATE_REJECTED_TEXT' not in payload['prompt']
+        return json.dumps(data), {}
+    monkeypatch.setattr(ollama_client, 'generate', response)
+    job = request(client, job_lead); worker.run_once()
+    run = client.get('/api/v1/runs/' + job['run_id']).json()
+    assert len(calls) == 2 and run['business_analysis'] is None
+    assert any(error['code'] == 'MODEL_OUTPUT_INVALID' for error in run['job']['errors'])
+
+
+def test_truncated_output_can_use_the_same_bounded_repair_budget(client, job_lead, nlp_worker, monkeypatch):
+    worker, calls = nlp_worker
+    def response(context, payload):
+        calls.append(payload)
+        if len(calls) == 1: raise ollama_client.InvalidModelOutput('{"summary":"unfinished', {}, 'truncated')
+        assert 'was cut off' in payload['prompt']
+        return json.dumps(valid_output()), {}
+    monkeypatch.setattr(ollama_client, 'generate', response)
+    job = request(client, job_lead); worker.run_once()
+    run = client.get('/api/v1/runs/' + job['run_id']).json()
+    assert run['business_analysis'] is not None and len(calls) == 2
+    assert 'MODEL_OUTPUT_REPAIRED' in run['job']['warnings']
+
+
+def test_repeated_truncation_stays_invalid_and_records_private_diagnostic(client, job_lead, nlp_worker, application, monkeypatch):
+    worker, calls = nlp_worker
+    def response(context, payload):
+        calls.append(payload)
+        raise ollama_client.InvalidModelOutput('{"summary":"unfinished', {}, 'truncated')
+    monkeypatch.setattr(ollama_client, 'generate', response)
+    job = request(client, job_lead); worker.run_once()
+    polled = client.get(job['poll_url']).json()
+    assert len(calls) == 2 and 'unfinished' not in str(polled)
+    assert any(error['code'] == 'MODEL_OUTPUT_INVALID' for error in polled['errors'])
+    with application.state.database.sessions() as session:
+        assert session.scalar(select(func.count()).select_from(BusinessAnalysis)) == 0
+        assert session.scalar(select(func.count()).select_from(ModelDiagnostic)) == 1
 
 
 def test_model_change_is_fenced_and_independent_visual_stage_runs(client, job_lead, nlp_worker, monkeypatch):
@@ -117,7 +198,7 @@ def test_evidence_review_during_generation_discards_result(client, job_lead, nlp
     worker, calls = nlp_worker
     def response(context, payload):
         with worker.database.sessions() as session:
-            from app.models.evidence import Evidence
+            from app.modules.evidence.evidence_model import Evidence
             evidence = session.scalar(select(Evidence))
             evidence_id = evidence.id
         client.patch('/api/v1/evidence/' + evidence_id + '/review', json={'usable': False, 'reason': 'Incorrect text'}, headers={'If-Match': '"1"'})

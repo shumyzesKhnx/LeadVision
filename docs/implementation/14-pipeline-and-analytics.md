@@ -8,7 +8,7 @@ Inputs: lead state-change request, optional note, required reopen/override reaso
 
 ## Future files and database changes
 
-`backend/app/schemas/pipeline.py`, `dashboard.py`; `backend/app/services/pipeline.py`, `dashboard.py`, `lead_export.py`; `backend/app/db/repositories/analytics.py`; `backend/app/api/pipeline.py`, `activities.py`, `dashboard.py`, `exports.py`; optional `backend/app/models/lead_tag.py`; migration `014_pipeline_indexes_tags.py`; `backend/tests/unit/test_transitions.py`, `test_csv_export_safety.py`; `backend/tests/integration/test_dashboard_counts.py`, `test_activities.py`.
+`backend/app/modules/pipeline/pipeline_schema.py`, `dashboard.py`; `backend/app/modules/pipeline/pipeline_service.py`, `dashboard.py`, `lead_export.py`; `backend/app/modules/pipeline/analytics_repository.py`; `backend/app/modules/pipeline/pipeline_api.py`, `activities.py`, `dashboard.py`, `exports.py`; optional `backend/app/modules/pipeline/lead_tag_model.py`; migration `015_pipeline_indexes_tags.py`; `backend/tests/unit/test_transitions.py`, `test_csv_export_safety.py`; `backend/tests/integration/test_dashboard_counts.py`, `test_activities.py`.
 
 Use existing lead pipeline state, activities and overrides; add indexes. Optional tags have UNIQUE lead/tag rows. State and event commit in the same transaction. Unique event keys prevent retries duplicating activities. Approved outreach does not change state.
 

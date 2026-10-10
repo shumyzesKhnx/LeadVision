@@ -10,9 +10,9 @@ Inputs: configured data root, loopback addresses, database URL, environment valu
 
 ## Future files and database changes
 
-- `backend/app/main.py`; `backend/app/core/config.py`, `errors.py`, `clock.py`, `hashing.py`, `storage.py`, `request_guards.py`.
-- `backend/app/db/base.py`, `session.py`, `migration_runner.py`; `backend/app/db/migrations/001_foundation.py`.
-- `backend/app/models/activity.py`, `maintenance.py`; `backend/app/services/activity.py`; `backend/app/api/health.py`; `backend/app/schemas/common.py`.
+- `backend/app/main.py`; `backend/app/modules/foundation/config.py`, `errors.py`, `clock.py`, `hashing.py`, `storage.py`, `request_guards.py`.
+- `backend/app/modules/foundation/database_base.py`, `session.py`, `migration_runner.py`; `backend/app/modules/foundation/001_foundation.py`.
+- `backend/app/modules/processing/activity_model.py`, `maintenance.py`; `backend/app/modules/processing/activity_service.py`; `backend/app/modules/foundation/health_api.py`; `backend/app/modules/foundation/common_schema.py`.
 - `backend/.env.example`, `.gitignore`, dependency input/lock files, `README.md`, `docs/model-manifest.json`, `docs/decisions.md`.
 - Tests: `backend/tests/unit/test_storage.py`, `test_errors.py`; `backend/tests/integration/test_database.py`, `test_request_guards.py`.
 

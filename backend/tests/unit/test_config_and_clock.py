@@ -4,9 +4,9 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from app.core.clock import to_karachi, utc_now
-from app.core.config import PROJECT_ROOT, Settings
-from app.core.hashing import content_hash, snapshot_hash
+from app.modules.foundation.clock import to_karachi, utc_now
+from app.modules.foundation.config import PROJECT_ROOT, Settings
+from app.modules.foundation.hashing import content_hash, snapshot_hash
 
 
 def test_configuration_has_stable_project_relative_paths(monkeypatch, tmp_path):

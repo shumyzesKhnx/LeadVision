@@ -4,8 +4,8 @@ from fastapi.testclient import TestClient
 from pydantic import Field
 from sqlalchemy.exc import OperationalError
 
-from app.core.errors import AppError
-from app.schemas.common import StrictModel
+from app.modules.foundation.errors import AppError
+from app.modules.foundation.common_schema import StrictModel
 
 
 class ExampleInput(StrictModel):

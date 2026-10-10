@@ -1,6 +1,6 @@
 import pytest
-from app.services import csv_import
-from app.services.csv_import import MAX_CSV_BYTES
+from app.modules.leads import csv_import_service as csv_import
+from app.modules.leads.csv_import_service import MAX_CSV_BYTES
 from test_leads import setup_campaign
 
 
@@ -82,7 +82,7 @@ def test_archiving_campaign_between_rows_stops_import(client, monkeypatch):
         result = original(session, body, **kwargs)
         calls += 1
         if calls == 1:
-            from app.models.campaign import Campaign
+            from app.modules.campaigns.campaign_model import Campaign
             session.get(Campaign, campaign['id']).archived = True
         return result
     monkeypatch.setattr(csv_import, 'create_lead', archive_after_first)

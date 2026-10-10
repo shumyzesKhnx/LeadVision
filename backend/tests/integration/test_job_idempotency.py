@@ -4,9 +4,9 @@ from uuid import uuid4
 import pytest
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
-from app.models.job import Job, JobStage
-from app.models.analysis_run import AnalysisRun
-from app.worker.main import Worker
+from app.modules.processing.job_model import Job, JobStage
+from app.modules.processing.analysis_run_model import AnalysisRun
+from app.modules.processing.worker_main import Worker
 
 
 def queue(client, lead, key='request-1', **body):
@@ -61,13 +61,13 @@ def test_concurrent_same_key_returns_one_run(settings, application, client, job_
     assert results[0].json() == results[1].json()
 
 
-def test_production_missing_handler_fails_honestly_and_retry_snapshots_current_inputs(client, job_lead, registered_worker):
+def test_production_unavailable_site_fails_honestly_and_retry_snapshots_current_inputs(client, job_lead, registered_worker):
     first = queue(client, job_lead).json()
     registered_worker.run_once()
     polled = client.get(first['poll_url']).json()
     assert polled['status'] == 'failed'
     assert client.get(f"/api/v1/leads/{job_lead['id']}").json()['processing_status'] == 'failed'
-    assert polled['errors'][0]['code'] == 'STAGE_NOT_IMPLEMENTED'
+    assert polled['errors'][0]['code'] == 'DNS_FAILURE'
     assert not any(stage['usable'] for stage in polled['stages'])
     client.patch(f"/api/v1/leads/{job_lead['id']}", json={'description': 'Changed company input'}, headers={'If-Match': '"1"'})
     retried = client.post(f"/api/v1/jobs/{first['job_id']}/retry", json={}, headers={'Idempotency-Key': 'retry-1'})

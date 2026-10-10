@@ -1,0 +1,21 @@
+ZIGRON: PUBLIC AGENCY KNOWLEDGE
+
+Purpose: local learning walkthrough using public information about a real company. This is not a claim that the student owns or represents Zigron. The outreach target discussed in the walkthrough is a hypothetical business requirement, not a publicly confirmed Zigron campaign.
+
+Services
+
+Zigron's official services page describes connected-device engineering, cloud platforms, mobile and web applications, AI and data systems, and cybersecurity. Its IoT work includes device integration and user-facing applications. These are published capabilities; individual client requirements still need assessment.
+
+Source: https://www.zigron.com/services
+
+Relevant published project: Abode smart-home security
+
+Zigron describes work on Abode's connected home-security platform. The case study covers device authentication, cloud infrastructure, video streaming, and integrations with smart-home ecosystems. It discusses sensors, cameras, keypads, hubs, alarm events, and controls for physical locks and alarms. The project also included mobile and web applications.
+
+This is relevant experience in connected security systems. It is a home-security example, not evidence that Zigron built a bank's alarm system. Its relevance to a particular bank must be reviewed against that bank's requirements.
+
+Source: https://www.zigron.com/work/abode-smart-home
+
+Use in outreach preparation
+
+Refer to the published services and Abode project accurately. Do not invent a bank customer, a bank deployment, or promised results. A prospect's need for a security alarm system requires separate evidence, such as a public request for proposals or information confirmed by the prospect. Website similarity alone does not establish that need.

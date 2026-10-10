@@ -7,17 +7,17 @@ import time
 import pytest
 from sqlalchemy import insert, inspect, select
 
-from app.core.config import BACKEND_ROOT, PROJECT_ROOT
-from app.core.hashing import content_hash
-from app.db.base import SchemaVersion
-from app.db.migration_runner import MIGRATIONS_DIR, SUPPORTED_SCHEMA_VERSION, migrate
-from app.db.session import Database
-from app.models.job import Job
-from app.schemas.job import AnalysisJobCreate
-from app.services import jobs
-from app.services.workflow import StageResult, StageFailure, STAGES
-from app.worker.main import Worker
-from app.worker.queue import claim_next
+from app.modules.foundation.config import BACKEND_ROOT, PROJECT_ROOT
+from app.modules.foundation.hashing import content_hash
+from app.modules.foundation.database_base import SchemaVersion
+from app.modules.foundation.migration_runner import MIGRATIONS_DIR, SUPPORTED_SCHEMA_VERSION, migrate
+from app.modules.foundation.database_session import Database
+from app.modules.processing.job_model import Job
+from app.modules.processing.job_schema import AnalysisJobCreate
+from app.modules.processing import jobs_service as jobs
+from app.modules.processing.workflow_service import StageResult, StageFailure, STAGES
+from app.modules.processing.worker_main import Worker
+from app.modules.processing.worker_queue import claim_next
 from test_job_idempotency import queue
 
 
@@ -31,7 +31,7 @@ def test_changed_queued_inputs_fail_but_notes_do_not(client, job_lead, registere
     client.patch(f"/api/v1/leads/{job_lead['id']}", json={'notes': 'Non-analytical note'}, headers={'If-Match': '"1"'})
     assert claim_next(registered_worker.database, registered_worker.owner) == first['job_id']
     with registered_worker.database.transaction(immediate=True) as session:
-        from app.worker.recovery import terminate
+        from app.modules.processing.worker_recovery import terminate
         terminate(session, session.get(Job, first['job_id']), 'cancelled')
     second = queue(client, job_lead, key='second').json()
     client.patch(f"/api/v1/leads/{job_lead['id']}", json={'description': 'Changed'}, headers={'If-Match': '"2"'})
@@ -118,10 +118,10 @@ def test_killed_worker_releases_os_lock_and_new_worker_recovers(client, job_lead
     monkeypatch.setattr(jobs, 'require_worker', lambda *args: None)
     queued = queue(client, job_lead).json()
     child_code = '''
-from app.core.config import Settings
-from app.db.session import Database
-from app.worker.main import Worker
-from app.worker.handlers import production_handlers
+from app.modules.foundation.config import Settings
+from app.modules.foundation.database_session import Database
+from app.modules.processing.worker_main import Worker
+from app.modules.processing.worker_handlers import production_handlers
 def slow(context, snapshot, outputs):
     while True:
         context.wait(0.1)
@@ -174,12 +174,12 @@ def test_schema_five_upgrade_is_atomic(settings, monkeypatch, broken):
         with database.engine.begin() as connection:
             SchemaVersion.__table__.create(connection)
             for source in sorted(MIGRATIONS_DIR.glob('00[1-5]_*.py')):
-                importlib.import_module('app.db.migrations.' + source.stem).upgrade(connection)
+                importlib.import_module('app.modules.foundation.' + source.stem).upgrade(connection)
                 connection.execute(insert(SchemaVersion).values(version=int(source.name[:3]),
                     checksum=content_hash(source.read_text(encoding='utf-8').encode()), applied_at='time'))
             connection.exec_driver_sql("INSERT INTO activities(id,action,origin,created_at) VALUES('preserved','legacy','api','time')")
         if broken:
-            module = importlib.import_module('app.db.migrations.006_jobs_runs')
+            module = importlib.import_module('app.modules.foundation.006_jobs_runs')
             original = module.upgrade
             def fail(connection):
                 original(connection)

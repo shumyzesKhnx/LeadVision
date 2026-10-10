@@ -1,7 +1,7 @@
 import pytest
-from app.db.migration_runner import SUPPORTED_SCHEMA_VERSION
+from app.modules.foundation.migration_runner import SUPPORTED_SCHEMA_VERSION
 
-from app.services.maintenance import set_maintenance
+from app.modules.foundation.maintenance_service import set_maintenance
 
 
 def test_health_and_swagger_work_without_models(client):

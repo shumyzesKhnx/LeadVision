@@ -1,10 +1,28 @@
 import json
 import pytest
 from pydantic import ValidationError
-from app.services.business_analysis import validate_output
-from app.services.nlp import select_text
+from app.modules.nlp.business_analysis_service import validate_output
+from app.modules.nlp.nlp_service import select_text
+from app.modules.nlp.business_analysis_service import generation_schema, correction_feedback, fit_prompt, build_prompt
 
 TEXT = 'CloudBooks provides accounting software to small businesses.'
+
+
+def test_real_bank_details_fit_with_correction_space_and_source_text():
+    snapshot = {'lead': {'industry': 'banking', 'country': 'US', 'employee_count': None,
+                        'description': 'Bank based in Utica, New York, offering personal and business banking, deposit accounts, loans, and online banking.'},
+                'services_context': [{'id': '2f75ccb8-94bb-44a5-bedb-f9eebfe175cd', 'revision': 7,
+                                      'name': 'Connected security systems',
+                                      'description': 'IoT device integration, cloud monitoring, and mobile/web applications for connec'}],
+                'models': {'generation': {'parameters': {'num_ctx': 4096, 'num_predict': 768}}}}
+    text = 'Bank of Utica offers personal and business banking. ' * 32
+    chunks, bound, manual = fit_prompt(snapshot, [{'text': text, 'start': 0, 'end': len(text)}])
+    assert chunks and len(chunks[0]['text']) >= 300
+    assert bound <= 4096 and manual['industry'] == 'banking'
+    feedback = {'problem': 'OBSERVATION_REFERENCE_INVALID', 'valid_observation_ids': ['summary', 'market:0', 'industry']}
+    system, prompt, _ = build_prompt(snapshot, chunks, repair=True, feedback=feedback)
+    assert len((system + prompt).encode()) + 256 + 768 <= 4096
+    assert text[chunks[0]['start']:chunks[0]['end']] == chunks[0]['text']
 
 
 def valid_output():
@@ -16,6 +34,32 @@ def valid_output():
 def test_supported_output_does_not_guess_employees():
     result, warnings = validate_output(json.dumps(valid_output()), [{'text': TEXT}], {})
     assert result['employee_count'] is None and warnings == ['MODEL_INTERPRETATION_REQUIRES_REVIEW']
+
+
+def test_schema_feedback_names_missing_fields_without_rejected_values():
+    raw = '{"summary":"PRIVATE_REJECTED_TEXT"}'
+    with pytest.raises(ValidationError) as caught:
+        validate_output(raw, [{'text': TEXT}], {})
+    feedback = correction_feedback(caught.value, raw, {})
+    assert feedback['problem'] == 'INVALID_JSON_OR_SCHEMA'
+    assert feedback['fields'][0] == {'field': 'summary_sources', 'type': 'missing'}
+    assert feedback['valid_observation_ids'] == ['summary']
+    assert 'PRIVATE_REJECTED_TEXT' not in json.dumps(feedback)
+    assert len(json.dumps(feedback).encode()) < 768
+
+
+def test_generation_contract_only_offers_real_quotes_and_valid_reference_names():
+    chunks = [{'text': 'First source line.'}, {'text': 'Second source line.'}, {'text': 'x' * 200}]
+    schema = generation_schema(chunks)
+    for name in ('Citation', 'CitedValue', 'EmployeeFact'):
+        choices = schema['$defs'][name]['properties']['quote']['enum']
+        assert all(any(quote in chunk['text'] for chunk in chunks) for quote in choices)
+        assert all(len(quote) <= 160 for quote in choices)
+        assert 'First source line. Second source line.' not in choices
+    ids = schema['$defs']['Opportunity']['properties']['observation_ids']['items']['enum']
+    assert '01' not in ids and 'summary' in ids and 'product:0' in ids
+    assert schema['properties']['products']['maxItems'] == 2
+    assert schema['properties']['summary']['maxLength'] == 240
 
 
 @pytest.mark.parametrize('change', ['source', 'quote', 'extra', 'length', 'opportunity', 'hypothesis'])

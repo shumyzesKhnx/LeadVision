@@ -9,10 +9,10 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'backend'))
 from fastapi.testclient import TestClient
-from app.core.config import Settings
+from app.modules.foundation.config import Settings
 from app.main import create_app
-from app.schemas.icp import CREATE_EXAMPLE
-from app.worker.main import Worker
+from app.modules.icp.icp_schema import CREATE_EXAMPLE
+from app.modules.processing.worker_main import Worker
 
 
 def main():

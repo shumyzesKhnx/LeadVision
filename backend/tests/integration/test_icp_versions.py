@@ -8,17 +8,17 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, insert, select, inspect
 from sqlalchemy.exc import IntegrityError
 
-from app.core.hashing import content_hash
-from app.core.errors import AppError
-from app.db.base import SchemaVersion
-from app.db.migration_runner import MIGRATIONS_DIR, SUPPORTED_SCHEMA_VERSION, migrate
-from app.db.session import Database
+from app.modules.foundation.hashing import content_hash
+from app.modules.foundation.errors import AppError
+from app.modules.foundation.database_base import SchemaVersion
+from app.modules.foundation.migration_runner import MIGRATIONS_DIR, SUPPORTED_SCHEMA_VERSION, migrate
+from app.modules.foundation.database_session import Database
 from app.main import create_app
-from app.models.icp import ICP, ICPVersion
-from app.models.activity import Activity
-from app.schemas.icp import CREATE_EXAMPLE
-from app.services.freshness import configuration_is_current
-from app.services.icp import require_icp
+from app.modules.icp.icp_model import ICP, ICPVersion
+from app.modules.processing.activity_model import Activity
+from app.modules.icp.icp_schema import CREATE_EXAMPLE
+from app.modules.processing.freshness_service import configuration_is_current
+from app.modules.icp.icp_service import require_icp
 
 
 def create_profile(client, **changes):
@@ -148,7 +148,7 @@ def test_activity_failure_rolls_back_pointer_and_version(client, application, mo
     first = create_profile(client).json()
     def fail(*args, **kwargs):
         raise RuntimeError('Simulated activity failure')
-    monkeypatch.setattr('app.services.icp.record_activity', fail)
+    monkeypatch.setattr('app.modules.icp.icp_service.record_activity', fail)
     assert patch(client, first, {'target_text': 'New desired customers'}).status_code == 500
     assert client.get(f"/api/v1/icps/{first['id']}").json() == first
     assert client.post('/api/v1/icps', json=CREATE_EXAMPLE).status_code == 500
@@ -204,13 +204,13 @@ def test_schema_two_upgrade_preserves_workspace_and_rolls_back_failure(settings,
         with db.engine.begin() as connection:
             SchemaVersion.__table__.create(connection)
             for number, name in [(1, '001_foundation'), (2, '002_agency_services')]:
-                importlib.import_module('app.db.migrations.' + name).upgrade(connection)
+                importlib.import_module('app.modules.foundation.' + name).upgrade(connection)
                 checksum = content_hash((MIGRATIONS_DIR / (name + '.py')).read_text(encoding='utf-8').encode())
                 connection.execute(insert(SchemaVersion).values(version=number, checksum=checksum, applied_at='2026-10-08T00:00:00Z'))
             connection.exec_driver_sql("INSERT INTO agencies VALUES ('agency',1,'Existing','Profile',NULL,2,'time','time')")
             connection.exec_driver_sql("INSERT INTO services VALUES ('service','agency','SEO','Offer',1,3,'time','time')")
         if broken:
-            module = importlib.import_module('app.db.migrations.003_icps')
+            module = importlib.import_module('app.modules.foundation.003_icps')
             original = module.upgrade
             def fail(connection):
                 original(connection)

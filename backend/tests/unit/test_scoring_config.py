@@ -1,9 +1,9 @@
 import pytest
 from pydantic import ValidationError
 
-from app.core.errors import AppError
-from app.services.criteria import COUNTRY_CODES, exclusion_reasons
-from app.services.icp import validate_config
+from app.modules.foundation.errors import AppError
+from app.modules.icp.criteria_service import COUNTRY_CODES, exclusion_reasons
+from app.modules.icp.icp_service import validate_config
 
 
 def config(**changes):

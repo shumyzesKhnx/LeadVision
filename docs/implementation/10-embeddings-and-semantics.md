@@ -8,7 +8,7 @@ Inputs: selected company description with provenance, ICP target text/version, m
 
 ## Future files and database changes
 
-`backend/app/models/embedding.py`, `semantic_result.py`; `backend/app/schemas/semantic_result.py`; `backend/app/integrations/embedding_model.py`; `backend/app/services/embeddings.py`, `semantic_matching.py`; `backend/app/db/repositories/embeddings.py`; migration `010_embeddings_semantics.py`; `backend/tests/unit/test_cosine.py`; `backend/tests/integration/test_embedding_cache.py`, `test_semantic_freshness.py`.
+`backend/app/modules/semantics/embedding_model.py`, `semantic_result.py`; `backend/app/modules/semantics/semantic_result_schema.py`; `backend/app/modules/semantics/embedding_model_client.py`; `backend/app/modules/semantics/embeddings_service.py`, `semantic_matching.py`; `backend/app/modules/semantics/embeddings_repository.py`; migration `010_embeddings_semantics.py`; `backend/tests/unit/test_cosine.py`; `backend/tests/integration/test_embedding_cache.py`, `test_semantic_freshness.py`.
 
 Create `embeddings`, `semantic_results` with model/config/hash uniqueness and vector references. Encode vectors as bounded float32 BLOB with dimension metadata; never deserialize pickle from uploads. Store one model space per comparison; reject mixing revisions even if dimensions happen to match.
 
@@ -33,3 +33,7 @@ No separate arbitrary model API. Results are in `GET /runs/{id}` and later score
 ## Tests and acceptance criteria
 
 Unit vectors verify cosine 1, 0 and -1 plus normalized values 100, 0, 0. Zero/empty vectors give missing. Stable inputs reuse cache; target text/model/config changes invalidate it. Industry/region edits invalidate structured score without unnecessarily recomputing unchanged description vectors. Compare curated accounting-SaaS and unrelated construction descriptions, report observed ordering and investigate unexpected results rather than hardcoding similarity expectations. Repeated pinned-model evaluation stays within documented float tolerance (proposed 1e-5). AT-06 requires comparable model spaces and correct freshness, not a population accuracy claim.
+
+## Implemented milestone
+
+Phase 10 uses the official pinned MiniLM ONNX export with ONNX Runtime CPU and its native tokenizer; it avoids a Torch dependency for this encoder. Local settings, explicit verified setup, cached runtime metadata and run responses are implemented. Token selection records the 256-token cap and a 12,000-character prefix bound. Migration 010 adds vector/runtime/results tables plus lead references for safe shared-cache deletion. See [the walkthrough](../phase-10-semantic-matching.md). Final scoring remains module 11.

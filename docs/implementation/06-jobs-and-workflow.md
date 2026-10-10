@@ -8,7 +8,7 @@ Inputs: lead ID, live/cached/uploaded mode, optional saved-upload token, page-se
 
 ## Future files and database changes
 
-`backend/app/models/job.py`, `analysis_run.py`; `backend/app/schemas/job.py`, `analysis_run.py`; `backend/app/db/repositories/jobs.py`; `backend/app/services/jobs.py`, `workflow.py`; `backend/app/worker/main.py`, `queue.py`, `handlers.py`, `recovery.py`; `backend/app/api/jobs.py`, `runs.py`; migration `006_jobs_runs.py`; `backend/tests/integration/test_job_idempotency.py`, `test_job_recovery.py`, `test_worker_concurrency.py`.
+`backend/app/modules/processing/job_model.py`, `analysis_run.py`; `backend/app/modules/processing/job_schema.py`, `analysis_run.py`; `backend/app/modules/processing/jobs_repository.py`; `backend/app/modules/processing/jobs_service.py`, `workflow.py`; `backend/app/modules/processing/worker_main.py`, `queue.py`, `handlers.py`, `recovery.py`; `backend/app/modules/processing/jobs_api.py`, `runs.py`; migration `006_jobs_runs.py`; `backend/tests/integration/test_job_idempotency.py`, `test_job_recovery.py`, `test_worker_concurrency.py`.
 
 Create `jobs`, `job_stages`, `analysis_runs`, active-lead partial unique indexes and idempotency uniqueness. Use worker_state plus singleton process lock. Lead deletion cancels/blocks active jobs first. No Redis, Celery or model execution in FastAPI BackgroundTasks is needed.
 

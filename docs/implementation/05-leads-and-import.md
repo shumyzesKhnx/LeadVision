@@ -10,7 +10,7 @@ Inputs: company_name, website, campaign; optional industry, country, employee_co
 
 ## Files and database changes
 
-`backend/app/models/lead.py`, `company.py`, `lead_fact.py`; `backend/app/schemas/lead.py`, `imports.py`; `backend/app/core/urls.py`; `backend/app/db/repositories/leads.py`; `backend/app/services/leads.py`, `csv_import.py`; `backend/app/api/leads.py`, `imports.py`; migration `005_leads.py`; `backend/tests/unit/test_url_identity.py`, `test_csv_validation.py`; `backend/tests/integration/test_leads.py`, `test_imports.py`.
+`backend/app/modules/leads/lead_model.py`, `company.py`, `lead_fact.py`; `backend/app/modules/leads/lead_schema.py`, `imports.py`; `backend/app/modules/foundation/urls.py`; `backend/app/modules/leads/leads_repository.py`; `backend/app/modules/leads/leads_service.py`, `csv_import.py`; `backend/app/modules/leads/leads_api.py`, `imports.py`; migration `005_leads.py`; `backend/tests/unit/test_url_identity.py`, `test_csv_validation.py`; `backend/tests/integration/test_leads.py`, `test_imports.py`.
 
 Create `companies`, `leads`, `lead_facts`. Add campaign-company unique constraint and list indexes. New leads receive `New` pipeline state. Extend activities with lead FK and deduplicated creation/import event keys. Runtime artifact tables are added in later modules.
 

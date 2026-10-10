@@ -4,8 +4,8 @@ import time
 from types import SimpleNamespace
 import httpx
 import pytest
-from app.integrations import ollama_client
-from app.services.workflow import StageFailure
+from app.modules.nlp import ollama_client
+from app.modules.processing.workflow_service import StageFailure
 
 
 def context(settings):

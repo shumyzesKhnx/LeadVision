@@ -3,9 +3,9 @@ import struct
 import zlib
 import pytest
 from PIL import Image
-from app.core.errors import AppError
-from app.services.image_validation import validate_image, MAX_IMAGE_BYTES
-from app.services.text_extraction import validate_saved_text, MAX_TEXT_BYTES
+from app.modules.foundation.errors import AppError
+from app.modules.evidence.image_validation_service import validate_image, MAX_IMAGE_BYTES
+from app.modules.evidence.text_extraction_service import validate_saved_text, MAX_TEXT_BYTES
 
 
 def picture(format='PNG', size=(40, 20), **options):

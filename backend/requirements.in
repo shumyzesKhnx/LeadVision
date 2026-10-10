@@ -9,3 +9,9 @@ pytest>=8,<10
 tzdata
 python-multipart>=0.0.20,<0.1
 Pillow>=12.1.1,<13
+opencv-python-headless>=4.12,<5
+numpy>=2.3,<3
+onnxruntime>=1.23,<2
+tokenizers>=0.22,<1
+playwright>=1.48,<2
+langchain-text-splitters>=1.1,<2

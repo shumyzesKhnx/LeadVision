@@ -6,7 +6,7 @@ import sys
 import uvicorn
 from pydantic import ValidationError
 
-from app.core.config import Settings
+from app.modules.foundation.config import Settings
 
 
 def main() -> None:

@@ -8,7 +8,7 @@ Inputs: bounded evidence text/excerpts, user corrections, active services as con
 
 ## Future files and database changes
 
-`backend/app/models/business_analysis.py`; `backend/app/schemas/business_analysis.py`; `backend/app/integrations/ollama_client.py`; `backend/app/services/nlp.py`, `business_analysis.py`, `model_cache.py`; `backend/app/prompts/business_analysis_v1.txt`; migration `008_business_analysis.py`; `backend/tests/unit/test_business_output.py`, `test_preprocessing.py`; `backend/tests/integration/test_model_failure.py`; future `scripts/benchmark_models.py`.
+`backend/app/modules/nlp/business_analysis_model.py`; `backend/app/modules/nlp/business_analysis_schema.py`; `backend/app/modules/nlp/ollama_client.py`; `backend/app/modules/nlp/nlp_service.py`, `business_analysis.py`, `model_cache.py`; `backend/app/modules/nlp/business_analysis_v1.txt`; migration `008_business_analysis.py`; `backend/tests/unit/test_business_output.py`, `test_preprocessing.py`; `backend/tests/integration/test_model_failure.py`; future `scripts/benchmark_models.py`.
 
 Create `business_analyses`; store validated JSON and immutable input/model/prompt snapshots. Raw response is a bounded local diagnostic file under controlled storage, excluded from public responses and Git. No generated output writes directly to lead fields.
 

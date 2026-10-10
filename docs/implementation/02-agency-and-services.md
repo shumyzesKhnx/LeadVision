@@ -10,7 +10,7 @@ Inputs: required agency name; description and optional business contact details;
 
 ## Future files and database changes
 
-`backend/app/models/agency.py`, `service.py`; `backend/app/schemas/agency.py`, `service.py`; `backend/app/db/repositories/agency.py`, `service.py`; `backend/app/services/agency.py`, `service_catalog.py`; `backend/app/api/agency.py`, `services.py`; migration `002_agency_services.py`; `backend/tests/integration/test_agency_services.py`.
+`backend/app/modules/agency/agency_model.py`, `service.py`; `backend/app/modules/agency/agency_schema.py`, `service.py`; `backend/app/modules/agency/agency_repository.py`, `service.py`; `backend/app/modules/agency/agency_service.py`, `service_catalog.py`; `backend/app/modules/agency/agency_api.py`, `services.py`; migration `002_agency_services.py`; `backend/tests/integration/test_agency_services.py`.
 
 Create `agencies` and `services` as defined in the schema. Enforce one agency with a singleton constraint. Service removal is soft deactivation; retain identifiers, previous draft snapshots and review history. Extend activity agency FK.
 

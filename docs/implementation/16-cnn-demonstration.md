@@ -8,7 +8,7 @@ Inputs: usable screenshots, lawful curated reference gallery, fixed ResNet18 wei
 
 ## Future files and database changes
 
-`backend/app/models/cnn_feature.py`; `backend/app/services/cnn_features.py`; `backend/app/integrations/resnet_features.py`; `backend/app/api/visual_references.py`; migration `016_cnn_features.py`; `experiments/cnn/reference-manifest.json`, `README.md`; `backend/tests/unit/test_cnn_similarity.py`; future `docs/evaluation/cnn-results.md`.
+`backend/app/modules/cnn_demo/cnn_feature_model.py`; `backend/app/modules/cnn_demo/cnn_features_service.py`; `backend/app/modules/cnn_demo/resnet_features_client.py`; `backend/app/modules/cnn_demo/visual_references_api.py`; migration `next numbered CNN migration (reserve its number when implemented)`; `experiments/cnn/reference-manifest.json`, `README.md`; `backend/tests/unit/test_cnn_similarity.py`; future `docs/evaluation/cnn-results.md`.
 
 Create optional `cnn_features` with visual-analysis FK, weights/preprocessing and vector. Reference manifest stores image ID/hash, permission/source, preprocessing and human notes; store small legal fixtures in repo, large reference screenshots outside it. No score-table changes and no nonzero visual weight from CNN alone.
 

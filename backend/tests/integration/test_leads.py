@@ -7,15 +7,15 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, insert, select, inspect
 from sqlalchemy.exc import IntegrityError
 
-from app.core.hashing import content_hash
-from app.db.base import SchemaVersion
-from app.db.migration_runner import MIGRATIONS_DIR, SUPPORTED_SCHEMA_VERSION, migrate
-from app.db.session import Database
+from app.modules.foundation.hashing import content_hash
+from app.modules.foundation.database_base import SchemaVersion
+from app.modules.foundation.migration_runner import MIGRATIONS_DIR, SUPPORTED_SCHEMA_VERSION, migrate
+from app.modules.foundation.database_session import Database
 from app.main import create_app
-from app.models.company import Company
-from app.models.lead import Lead
-from app.models.lead_fact import LeadFact
-from app.schemas.icp import CREATE_EXAMPLE
+from app.modules.leads.company_model import Company
+from app.modules.leads.lead_model import Lead
+from app.modules.leads.lead_fact_model import LeadFact
+from app.modules.icp.icp_schema import CREATE_EXAMPLE
 
 
 def setup_campaign(client, name='Campaign'):
@@ -162,7 +162,7 @@ def test_activity_failure_rolls_back_lead_and_provenance(client, application, mo
     lead = add_lead(client, campaign)
     def fail(*args, **kwargs):
         raise RuntimeError('Injected activity failure')
-    monkeypatch.setattr('app.services.leads.record_activity', fail)
+    monkeypatch.setattr('app.modules.leads.leads_service.record_activity', fail)
     assert edit(client, lead, {'industry': 'software'}).status_code == 500
     assert client.get(f"/api/v1/leads/{lead['id']}").json() == lead
     assert client.post('/api/v1/leads', json={'company_name': 'Rollback', 'website': 'https://rollback.example.com', 'campaign_id': campaign['id']}).status_code == 500
@@ -201,13 +201,13 @@ def test_schema_four_upgrade_preserves_links_and_rolls_back_bad_legacy_lead(sett
         with db.engine.begin() as connection:
             SchemaVersion.__table__.create(connection)
             for number, name in [(1, '001_foundation'), (2, '002_agency_services'), (3, '003_icps'), (4, '004_campaigns')]:
-                importlib.import_module('app.db.migrations.' + name).upgrade(connection)
+                importlib.import_module('app.modules.foundation.' + name).upgrade(connection)
                 checksum = content_hash((MIGRATIONS_DIR / (name + '.py')).read_text(encoding='utf-8').encode())
                 connection.execute(insert(SchemaVersion).values(version=number, checksum=checksum, applied_at='time'))
             connection.exec_driver_sql("INSERT INTO activities(id,lead_id,action,origin,created_at) VALUES('event',?,'legacy','api','time')", ('missing' if orphan else None,))
             connection.exec_driver_sql("INSERT INTO file_cleanup_tasks(id,artifact_key,reason,state,attempts,created_at,activity_id) VALUES('cleanup','evidence/x.txt','test','pending',0,'time','event')")
         if orphan:
-            with pytest.raises(IntegrityError):
+            with pytest.raises((IntegrityError, RuntimeError), match="(?i)foreign key"):
                 migrate(db.engine)
             assert 'leads' not in inspect(db.engine).get_table_names()
         else:

@@ -8,7 +8,7 @@ Inputs: implemented core modules, curated legal fixtures, independent human revi
 
 ## Future files and database changes
 
-`scripts/backup.py`, `restore.py`, `benchmark_reference_demo.py`; `backend/app/services/maintenance.py`; `backend/tests/integration/test_backup_restore.py`, `test_saved_end_to_end.py`; `docs/evaluation/acceptance-report.md`, `quality-review.md`, `resource-benchmark.md`, `known-limitations.md`; `README.md`, `docs/demo-script.md`, `docs/requirements-changes.md`.
+`scripts/backup.py`, `restore.py`, `benchmark_reference_demo.py`; `backend/app/modules/foundation/maintenance_service.py`; `backend/tests/integration/test_backup_restore.py`, `test_saved_end_to_end.py`; `docs/evaluation/acceptance-report.md`, `quality-review.md`, `resource-benchmark.md`, `known-limitations.md`; `README.md`, `docs/demo-script.md`, `docs/requirements-changes.md`.
 
 No new business tables. Use foundation maintenance/cleanup state. SQLite holds authoritative vectors; include optional derived index files and model/config manifests in backup set. Full model weights need not be duplicated in every data backup, but restore setup documents their exact required digests and local cache availability.
 

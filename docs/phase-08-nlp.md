@@ -36,14 +36,14 @@ If Ollama is unavailable or returns invalid output, earlier evidence stays avail
 
 | File | Purpose |
 |---|---|
-| `backend/app/services/nlp.py` | Select text while preserving source offsets and trim decisions |
-| `backend/app/services/business_analysis.py` | Prompt, validate claims, respect corrections and save results |
-| `backend/app/services/model_cache.py` | Refresh local-model readiness and find exact-input cached results |
-| `backend/app/integrations/ollama_client.py` | Bounded local HTTP calls and cancellation |
-| `backend/app/prompts/business_analysis_v1.txt` | Versioned instructions that treat website text as data |
-| `backend/app/schemas/business_analysis.py` | Strict model-output structure |
-| `backend/app/models/business_analysis.py` | Runtime metadata, immutable results and private diagnostics |
-| `backend/app/db/migrations/008_business_analysis.py` | Add Phase 8 database tables |
+| `backend/app/modules/nlp/nlp_service.py` | Select text while preserving source offsets and trim decisions |
+| `backend/app/modules/nlp/business_analysis_service.py` | Prompt, validate claims, respect corrections and save results |
+| `backend/app/modules/nlp/model_cache_service.py` | Refresh local-model readiness and find exact-input cached results |
+| `backend/app/modules/nlp/ollama_client.py` | Bounded local HTTP calls and cancellation |
+| `backend/app/modules/nlp/business_analysis_v1.txt` | Versioned instructions that treat website text as data |
+| `backend/app/modules/nlp/business_analysis_schema.py` | Strict model-output structure |
+| `backend/app/modules/nlp/business_analysis_model.py` | Runtime metadata, immutable results and private diagnostics |
+| `backend/app/modules/foundation/008_business_analysis.py` | Add Phase 8 database tables |
 | `scripts/benchmark_models.py` | Run a separate local trial with temporary data |
 | `backend/tests/unit/test_business_output.py`, `test_ollama_client.py` | Quote/schema/token selection and transport/cancellation checks |
 | `backend/tests/integration/test_model_failure.py` | Cache, repair, corrections, model changes and review races |
@@ -61,3 +61,13 @@ Settings are in `backend/.env.example`: context 4,096 tokens, output 768, select
 The adapter follows Ollama's official [generation API](https://docs.ollama.com/api/generate) and [structured-output documentation](https://docs.ollama.com/capabilities/structured-outputs).
 
 Verified for this phase: **286 tests passed in 34.30 seconds**, and both real local-model fixtures passed. Earlier model startup took about 28 seconds, so the first request can take longer than subsequent ones. Schema 8 preserved all existing application records and passed foreign-key checks. Swagger returned HTTP 200; health reported the worker and configured model available. No trial leads, uploads or analyses were written into your real database.
+
+## Summary reliability fix, 9 October 2026
+
+The live Arbisoft trial exposed invalid citations: the model joined separate website lines into quotes and used a heading number as an observation ID. Another failure path cut off an answer at its output-token limit before normal repair/diagnostic handling. These were real summary failures; acquisition, image measurements and scoring were retained.
+
+Prompt version `business_analysis_v2` uses `business_analysis_v2.txt`; the original v1 prompt is preserved. Model generation now uses a concise schema: summary <=240 characters, at most two summary citations/products/markets and one opportunity, quote choices drawn only from unchanged selected source excerpts, and controlled observation names. The stored response contract and exact source checks are unchanged. Prompt input omits offsets the model does not need; provenance retains them. Invalid references to absent observations still fail validation. Truncated responses now enter the same bounded repair/diagnostic path. A failed repair cannot introduce a third model call through transport retry. No invalid or partial JSON is accepted as a successful summary.
+
+Actual local-model regression runs for the previously captured Arbisoft text/image, a basic company and an instruction-injection fixture all finished **completed** with validated summaries and unknown employee counts retained as null. The Arbisoft fixture also retained image/semantic results and a score. These were isolated cached/uploaded trials, not fresh live collection or edits to your real leads. Results are in `.cache/nlp-fix/results.json`. Model interpretations still need human review; exact quotes are provenance checks, not proof of every interpretation.
+
+Validation: the complete suite passed **393 tests**, followed by **29 focused checks** after the final repair-budget test and prompt-file change. Historical failed runs are not rewritten. Restart both API and worker; retry the old job with a new idempotency key to produce a new run. No database migration or model download is needed for this fix.

@@ -9,16 +9,16 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, insert, select
 from sqlalchemy.exc import IntegrityError
 
-from app.core.errors import AppError
-from app.core.hashing import content_hash
-from app.db.base import SchemaVersion
-from app.db.migration_runner import MIGRATIONS_DIR, SUPPORTED_SCHEMA_VERSION, migrate
-from app.db.session import Database
+from app.modules.foundation.errors import AppError
+from app.modules.foundation.hashing import content_hash
+from app.modules.foundation.database_base import SchemaVersion
+from app.modules.foundation.migration_runner import MIGRATIONS_DIR, SUPPORTED_SCHEMA_VERSION, migrate
+from app.modules.foundation.database_session import Database
 from app.main import create_app
-from app.models.activity import Activity
-from app.models.agency import Agency
-from app.models.service import Service
-from app.services.service_catalog import require_active_service
+from app.modules.processing.activity_model import Activity
+from app.modules.agency.agency_model import Agency
+from app.modules.agency.service_model import Service
+from app.modules.agency.service_catalog_service import require_active_service
 
 
 def add_agency(client):
@@ -160,10 +160,10 @@ def test_maximum_valid_descriptions_do_not_overflow_activity_logs(client):
 def test_records_survive_application_restart(settings, monkeypatch):
     # The application fixture normally provides the offline runtime probe.
     async def unavailable(_url):
-        from app.schemas.common import DependencyHealth
+        from app.modules.foundation.common_schema import DependencyHealth
         return DependencyHealth(status="unavailable", message="Offline")
 
-    monkeypatch.setattr("app.api.health.probe_ollama", unavailable)
+    monkeypatch.setattr("app.modules.foundation.health_api.probe_ollama", unavailable)
     with TestClient(create_app(settings), base_url="http://127.0.0.1:8000") as first:
         agency_id = add_agency(first).json()["id"]
         service_id = add_service(first).json()["id"]
@@ -177,7 +177,7 @@ def test_activity_failure_rolls_back_workspace(client, application, monkeypatch)
     def fail(*args, **kwargs):
         raise RuntimeError("Simulated activity failure")
 
-    monkeypatch.setattr("app.services.agency.record_activity", fail)
+    monkeypatch.setattr("app.modules.agency.agency_service.record_activity", fail)
     assert client.post("/api/v1/agency", json={"name": "Rollback"}).status_code == 500
     with application.state.database.sessions() as session:
         assert session.scalar(select(func.count()).select_from(Agency)) == 0
@@ -190,7 +190,7 @@ def test_activity_failure_rolls_back_service_edit(client, application, monkeypat
     def fail(*args, **kwargs):
         raise RuntimeError("Simulated activity failure")
 
-    monkeypatch.setattr("app.services.service_catalog.record_activity", fail)
+    monkeypatch.setattr("app.modules.agency.service_catalog_service.record_activity", fail)
     assert client.patch(f"/api/v1/services/{created.json()['id']}", headers={"If-Match": '"1"'}, json={"active": False}).status_code == 500
     current = client.get(f"/api/v1/services/{created.json()['id']}").json()
     assert current["active"] is True
@@ -229,7 +229,7 @@ def test_database_constraints_protect_relationships(database):
 def test_upgrade_preserves_legacy_events_cleanup_links_and_maintenance(settings, orphan_agency):
     settings.data_dir.mkdir()
     database = Database(settings)
-    foundation = importlib.import_module("app.db.migrations.001_foundation")
+    foundation = importlib.import_module("app.modules.foundation.001_foundation")
     try:
         with database.engine.begin() as connection:
             SchemaVersion.__table__.create(connection)
@@ -243,7 +243,7 @@ def test_upgrade_preserves_legacy_events_cleanup_links_and_maintenance(settings,
             connection.exec_driver_sql("INSERT INTO file_cleanup_tasks (id,artifact_key,reason,state,attempts,created_at,activity_id) VALUES ('task-1','evidence/test.txt','legacy','pending',0,'2026-10-07T00:00:00Z','event-1')")
             connection.exec_driver_sql("UPDATE worker_state SET maintenance_requested=1,maintenance_reason='Existing backup'")
         if orphan_agency:
-            with pytest.raises(IntegrityError):
+            with pytest.raises((IntegrityError, RuntimeError), match="(?i)foreign key"):
                 migrate(database.engine)
         else:
             assert migrate(database.engine) == SUPPORTED_SCHEMA_VERSION

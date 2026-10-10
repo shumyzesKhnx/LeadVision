@@ -1,0 +1,33 @@
+FICTIONAL DEMO MATERIAL - FOR TESTING ONLY
+
+Everything in this file is invented. TechNova Demo Agency and the client examples below are fictional. These statements must not be presented as real agency experience or real client results.
+
+Agency profile
+
+TechNova Demo Agency is a fictional digital agency based in Lahore, Pakistan. It offers website redesign, responsive website development, e-commerce development and basic search engine optimization. Its example customers are small and medium-sized software businesses and online retailers.
+
+Website redesign service
+
+The agency redesigns business websites with confusing navigation, unclear service pages or layouts that are difficult to use on mobile phones. Its proposed work includes reviewing the existing pages, planning clearer navigation, improving mobile layouts and making contact forms easier to find. It also helps businesses explain their products and services in simple wording.
+
+Fictional case study: software company website
+
+The fictional client, DemoSoft Pakistan, needed a clearer website to explain its software development services. Its old website had crowded menus, confusing service descriptions and a contact form that was difficult to find on a phone.
+
+In this invented example, TechNova Demo Agency reorganized the navigation, rewrote the service pages and created a responsive mobile layout. It placed a clear contact button on the main pages and simplified the enquiry form. The example demonstrates the kind of website redesign work the agency offers. There are no verified conversion, revenue or traffic results for this fictional case.
+
+E-commerce development service
+
+The agency builds online shops with product categories, product pages, shopping carts and checkout screens. Its proposed work includes organizing the catalogue, explaining delivery information and making the shopping experience usable on mobile devices.
+
+Fictional case study: online clothing shop
+
+The fictional client, DemoWear Lahore, wanted customers to browse clothing categories more easily. In this invented example, the agency organized the product catalogue, added size information and simplified the mobile shopping journey. There are no verified sales results for this fictional case.
+
+Search engine optimization service
+
+The agency offers basic on-page search engine optimization. Its proposed work includes reviewing page titles, headings, internal links and product descriptions. It does not promise a particular search ranking or a guaranteed increase in traffic.
+
+Evidence and use
+
+This document is a test fixture, not proof of completed client work. Keep the document marked as fictional demo material in Lead Vision. Enable demo material explicitly when testing retrieval. Replace these examples with accurate, reviewed agency facts before using knowledge for real outreach.

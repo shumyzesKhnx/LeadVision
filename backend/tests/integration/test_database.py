@@ -5,15 +5,15 @@ import pytest
 from sqlalchemy import func, inspect, select, text
 from sqlalchemy.exc import IntegrityError, OperationalError
 
-from app.core.config import Settings
-from app.core.storage import ArtifactStorage
-from app.db.base import SchemaVersion
-from app.db.migration_runner import migrate, SUPPORTED_SCHEMA_VERSION
-from app.db.session import Database
-from app.models.activity import Activity
-from app.models.maintenance import FileCleanupTask
-from app.services.activity import record_activity
-from app.services.file_cleanup import perform_cleanup, queue_cleanup
+from app.modules.foundation.config import Settings
+from app.modules.foundation.storage import ArtifactStorage
+from app.modules.foundation.database_base import SchemaVersion
+from app.modules.foundation.migration_runner import migrate, SUPPORTED_SCHEMA_VERSION
+from app.modules.foundation.database_session import Database
+from app.modules.processing.activity_model import Activity
+from app.modules.foundation.maintenance_model import FileCleanupTask
+from app.modules.processing.activity_service import record_activity
+from app.modules.foundation.file_cleanup_service import perform_cleanup, queue_cleanup
 
 
 def test_restart_and_repeat_migration_preserve_committed_records(database, settings):
@@ -69,7 +69,7 @@ def test_sensitive_activity_keys_are_rejected(database):
 
 
 def test_changed_applied_migration_is_rejected(database, tmp_path, monkeypatch):
-    from app.db import migration_runner
+    from app.modules.foundation import migration_runner
 
     source = migration_runner.MIGRATIONS_DIR / "001_foundation.py"
     copied = tmp_path / source.name
@@ -89,7 +89,7 @@ def test_newer_schema_is_rejected(database):
 
 
 def test_git_line_ending_changes_do_not_invalidate_migration(database, tmp_path, monkeypatch):
-    from app.db import migration_runner
+    from app.modules.foundation import migration_runner
 
     for source in migration_runner.MIGRATIONS_DIR.glob("[0-9][0-9][0-9]_*.py"):
         (tmp_path / source.name).write_bytes(source.read_text(encoding="utf-8").replace("\n", "\r\n").encode("utf-8"))
@@ -100,7 +100,7 @@ def test_git_line_ending_changes_do_not_invalidate_migration(database, tmp_path,
 def test_migration_failure_rolls_back_ddl(settings, monkeypatch):
     settings.data_dir.mkdir()
     database = Database(settings)
-    module = importlib.import_module("app.db.migrations.001_foundation")
+    module = importlib.import_module("app.modules.foundation.001_foundation")
 
     def broken(connection):
         connection.exec_driver_sql("CREATE TABLE temporary_table (id INTEGER)")

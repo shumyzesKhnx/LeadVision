@@ -10,7 +10,7 @@ Inputs: name, target description, optional canonical industries/countries/region
 
 ## Files and database changes
 
-`backend/app/models/icp.py`; `backend/app/schemas/icp.py`, `scoring_config.py`; `backend/app/db/repositories/icp.py`; `backend/app/services/icp.py`, `freshness.py`, `criteria.py`; `backend/app/api/icps.py`; migration `003_icps.py`; `backend/tests/unit/test_scoring_config.py`; `backend/tests/integration/test_icp_versions.py`.
+`backend/app/modules/icp/icp_model.py`; `backend/app/modules/icp/icp_schema.py`, `scoring_config.py`; `backend/app/modules/icp/icp_repository.py`; `backend/app/modules/icp/icp_service.py`, `freshness.py`, `criteria.py`; `backend/app/modules/icp/icps_api.py`; migration `003_icps.py`; `backend/tests/unit/test_scoring_config.py`; `backend/tests/integration/test_icp_versions.py`.
 
 Create `icps` and `icp_versions`. Versions hold criteria, weights, thresholds, rule version and hash together. This avoids scoring with new weights but old exclusions. Target-text changes invalidate semantic results; weights-only changes invalidate scores but can reuse compatible vectors.
 

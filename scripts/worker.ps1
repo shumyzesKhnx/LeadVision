@@ -7,7 +7,7 @@ if (-not (Test-Path -LiteralPath $pythonPath)) {
 }
 Push-Location -LiteralPath (Join-Path $projectPath 'backend')
 try {
-    & $pythonPath -m app.worker.main
+    & $pythonPath -m app.modules.processing.worker_main
     $commandExitCode = $LASTEXITCODE
 } finally {
     Pop-Location

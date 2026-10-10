@@ -6,9 +6,9 @@
 
 Inputs: lead, selected active service, current supported company context/run, usable observations, retrieved approved chunks, optional verified contact name, model/prompt config. Outputs: subject/body with claim-source map, retrieval IDs/scores, immutable generation/edit/review revisions, reviewer/time, visible grounding warnings and approved manual-copy text.
 
-## Future files and database changes
+## Files and database changes
 
-`backend/app/models/outreach.py`; `backend/app/schemas/outreach.py`; `backend/app/db/repositories/outreach.py`; `backend/app/services/outreach.py`, `draft_grounding.py`, `draft_review.py`; `backend/app/prompts/outreach_v1.txt`; `backend/app/api/outreach.py`; migration `013_outreach.py`; `backend/tests/unit/test_draft_validation.py`; `backend/tests/integration/test_draft_history.py`, `test_grounded_fallback.py`.
+`backend/app/modules/outreach/outreach_model.py`; `backend/app/modules/outreach/outreach_schema.py`; `backend/app/modules/outreach/outreach_repository.py`; `backend/app/modules/outreach/outreach_service.py`, `draft_grounding.py`, `draft_review.py`; `backend/app/modules/outreach/outreach_v1.txt`; `backend/app/modules/outreach/outreach_api.py`; migration `backend/app/modules/foundation/014_outreach.py`; `backend/tests/unit/test_draft_validation.py`; `backend/tests/integration/test_draft_history.py`, `test_grounded_fallback.py`.
 
 Create `outreach_drafts`, `outreach_revisions`, `draft_sources`. Regeneration creates a new draft series. Editing creates a new text revision. Approval/rejection creates an immutable review revision copying the reviewed text. Retain service/company/knowledge snapshots so the reviewer can inspect the historical claim basis.
 
@@ -35,3 +35,7 @@ Create `outreach_drafts`, `outreach_revisions`, `draft_sources`. Regeneration cr
 ## Tests and acceptance criteria
 
 Generate, edit and approve; compare preserved text/revisions and reviewer/time. Regenerate creates separate series; approve old revision race is rejected. Empty retrieval yields service-only message with no invented case study. Missing contact uses generic greeting. Unsupported claim prevents unchecked approval; source review/edit resolves it. Service removal or knowledge archive retains approved text but shows warning. Review at least five actual model drafts, count unsupported factual claims and require zero in final approved demo drafts. AT-09 confirms no external messaging and no automatic Contacted transition.
+
+## Implemented behavior
+
+The company page now offers draft preparation, editing, factual review, revision history and copying of the current approved text. Source passages stay collapsed until requested. Retrieval is a separate saved job stage, so it remains inspectable if generation fails. Two invalid model answers produce a clearly labeled, validated service-introduction template; it does not include case studies. Model transport/timeouts remain failures. Reviewed text is never sent automatically. Configuration uses the existing Qwen model with 8192 context tokens and 1536 output tokens by default.

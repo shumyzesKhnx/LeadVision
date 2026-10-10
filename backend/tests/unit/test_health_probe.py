@@ -3,7 +3,7 @@ import asyncio
 import httpx
 import pytest
 
-from app.api.health import probe_ollama
+from app.modules.foundation.health_api import probe_ollama
 
 
 def install_transport(monkeypatch, handler):

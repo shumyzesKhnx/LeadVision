@@ -6,9 +6,9 @@
 
 Inputs: immutable ICP/rule/threshold version, reviewed industry, known country and employee count, semantic result, optional calibrated visual result, provenance and freshness. Outputs: score or null, component breakdown, coverage, numerical band, displayed priority, hard-exclusion reasons, qualification recommendation, independent reviewer override history.
 
-## Future files and database changes
+## Implementation files and database changes
 
-`backend/app/models/score.py`, `reviewer_override.py`; `backend/app/schemas/score.py`; `backend/app/services/scoring.py`, `eligibility.py`, `overrides.py`; `backend/app/db/repositories/scores.py`; `backend/app/api/scores.py`, `overrides.py`; migration `011_scores.py`; `backend/tests/unit/test_score_arithmetic.py`, `test_score_missing.py`, `test_exclusions.py`; `backend/tests/integration/test_score_history.py`.
+`backend/app/modules/scoring/score_model.py`, `reviewer_override.py`; `backend/app/modules/scoring/score_schema.py`; `backend/app/modules/scoring/scoring_service.py`, `eligibility.py`, `overrides.py`; `backend/app/modules/scoring/scores_repository.py`; `backend/app/modules/scoring/scores_api.py`, `overrides.py`; migration `011_scores.py`; `backend/tests/unit/test_score_arithmetic.py`, `test_score_missing.py`, `test_exclusions.py`; `backend/tests/integration/test_score_history.py`.
 
 Create `score_runs`, `score_components`, `reviewer_overrides`. Store source snapshots and exact input/rule/config references, not just total. Calculated scores are append-only. Latest result query never erases older score history.
 
@@ -41,3 +41,11 @@ Invalid weights/config fail `SCORING_CONFIG_INVALID`; absent components produce 
 - Weight/input changes preserve old score/version and suppress current recommendation. Override reason is required and original score unchanged.
 
 AT-07 passes with these fixture calculations and history. Production score must never depend on ML extension output.
+
+## Implemented status, 9 October 2026
+
+Core scoring is implemented in schema 11. Tests for missing values and exclusions are grouped into `test_score_arithmetic.py` and `test_score_history.py` rather than additional small test files. Lead detail/list and analysis-run responses expose calculated scores; priority filtering happens before pagination. Five component rows retain availability and contributions even when a component is disabled. Score rows, component rows and reviewer history reject database updates. Clearing a decision appends a new `clear` record.
+
+Generated industry/employee guesses need operator review through lead corrections before scoring. User-entered facts are explicit but not independently verified. Visual calibration remains unimplemented and visual weight remains zero. No pipeline transitions are automatic. Qualification decision records are groundwork for module 14. Recompute through a fresh analysis job, including retry of a completed job; saved score history remains visible and older scores are marked superseded.
+
+See [actual verification and Swagger instructions](../phase-11-explained-scoring.md).

@@ -1,5 +1,5 @@
 import pytest
-from app.core.urls import normalize_website
+from app.modules.foundation.urls import normalize_website
 
 
 @pytest.mark.parametrize('url,domain,normalized', [

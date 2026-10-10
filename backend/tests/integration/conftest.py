@@ -1,5 +1,5 @@
 import pytest
-from app.worker.main import Worker
+from app.modules.processing.worker_main import Worker
 from test_leads import setup_campaign, add_lead
 
 

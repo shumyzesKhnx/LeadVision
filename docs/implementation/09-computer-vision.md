@@ -8,7 +8,7 @@ Inputs: validated usable screenshot and preprocessing configuration. Outputs: de
 
 ## Future files and database changes
 
-`backend/app/models/visual_analysis.py`; `backend/app/schemas/visual_analysis.py`; `backend/app/services/vision.py`, `visual_heuristic.py`; `backend/app/core/vision_config.py`; migration `009_visual_analysis.py`; `backend/tests/unit/test_visual_metrics.py`, `test_visual_unavailable.py`; future `docs/evaluation/visual-calibration.md`.
+`backend/app/modules/computer_vision/visual_analysis_model.py`; `backend/app/modules/computer_vision/visual_analysis_schema.py`; `backend/app/modules/computer_vision/vision_service.py`, `visual_heuristic.py`; `backend/app/modules/computer_vision/vision_config.py`; migration `009_visual_analysis.py`; `backend/tests/unit/test_visual_metrics.py`, `test_visual_unavailable.py`; future `docs/evaluation/visual-calibration.md`.
 
 Create `visual_analyses` with screenshot FK, preprocessing/config version, raw values, usability and optional calibration ID. Review annotations affect currentness without rewriting original measurements. Cache key includes image hash and every metric/preprocessing setting.
 
@@ -33,3 +33,7 @@ Invalid dimensions/decoder failure: CV unavailable with `INVALID_IMAGE`. Reviewe
 ## Tests and acceptance criteria
 
 Uniform image yields near-zero edges and concentrated brightness/color distribution; grid image yields greater edge density. Same fixture/config gives same values within defined numeric tolerance (proposed 1e-6 for normalized metrics). Resize/orientation is recorded and original hash unchanged. Unusable screenshot cannot yield a high score. Review six varied screenshots with notes. No output claims CTA recognition, text density, outdated design, usability failure or buying intent from these metrics. AT-05 includes deterministic fixtures and interpretation limits; optional heuristic absence does not fail core acceptance.
+
+## Implemented milestone
+
+Core saved-image measurements are implemented in Phase 9. See [the walkthrough](../phase-09-computer-vision.md) for actual files and Swagger steps. The working image also has a 2,048-pixel height limit for tall screenshots. Raw metrics use normalized histograms, fixed quantization and area-weighted partial boundary tiles. No visual heuristic or calibration is enabled. Six synthetic fixtures validate numerical behaviour; a human-reviewed website evaluation set remains pending.

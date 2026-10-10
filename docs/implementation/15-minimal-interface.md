@@ -8,7 +8,13 @@ Inputs: operator form entries/API responses and all job/warning states. Outputs:
 
 ## Future files and database changes
 
-`frontend/index.html`; `frontend/css/app.css`; `frontend/js/api.js`, `state.js`, `setup.js`, `leads.js`, `analysis.js`, `knowledge.js`, `drafts.js`, `dashboard.js`; static mount in `backend/app/main.py`; `backend/tests/integration/test_static_routes.py`; `backend/tests/ui/test_operator_flow.py`. No new tables. No React, Next.js, Tailwind or frontend build pipeline.
+`frontend/index.html`; `frontend/app.js`; `frontend/shared/api.js`, `context.js`,
+`data.js`, `ui.js`, `styles/app.css`; feature folders in `frontend/modules/`
+for agency, icp, campaigns, leads, processing, evidence, nlp, computer_vision,
+semantics, scoring, overview and flow. Later knowledge, outreach and pipeline
+screens will get their own feature folders. Static mount in `backend/app/main.py`;
+frontend route and Chrome checks in `backend/tests/integration/`.
+No new tables. No React, Next.js, Tailwind or frontend build pipeline.
 
 ## Endpoints
 

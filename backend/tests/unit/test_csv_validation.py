@@ -1,6 +1,6 @@
 import pytest
-from app.core.errors import AppError
-from app.services.csv_import import MAX_CSV_BYTES, parse_csv, row_payload
+from app.modules.foundation.errors import AppError
+from app.modules.leads.csv_import_service import MAX_CSV_BYTES, parse_csv, row_payload
 
 
 @pytest.mark.parametrize('content,code', [

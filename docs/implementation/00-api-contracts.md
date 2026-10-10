@@ -78,7 +78,7 @@ Current lead responses retain original/normalized website/domain, analytical inp
 | 06 | `POST /jobs/{id}/retry` | new Idempotency-Key; optional fresh upload_token for saved analysis | new job using current inputs and retained validated saved evidence; retry_of ID; request new upload if evidence is unavailable |
 | 06 | `GET /leads/{id}/runs`; `GET /runs/{id}` | pagination for history | snapshots, completed outputs and warnings |
 | 11 | `GET /leads/{id}/scores`; `GET /scores/{id}` | pagination for history | score, components, sources, coverage, freshness, exclusion and recommendation |
-| 11 | `POST /leads/{id}/overrides` | kind, value, reason, reviewer, score_id optional | independent recorded override; does not replace computed score |
+| 11 | `POST /leads/{id}/overrides` | kind, value, reason, reviewer, required score_id; lead If-Match | independent recorded override; does not replace computed score |
 
 Receipt: `{job_id,status,poll_url,run_id}`. Poll shape: `{id,kind,status,current_stage,progress:{finished_stages,total_stages},queued_at,started_at,finished_at,warnings,errors,result:{run_id?,draft_id?,knowledge_version_id?},retryable}`. Progress is stage count, not a fictitious accurate percentage of runtime. Completion may include missing score; see stage outcomes.
 
@@ -86,18 +86,20 @@ Score response distinguishes `score` (0–100 or null), `coverage` (0–1), `sco
 
 ## Knowledge and outreach
 
+Module 12 is implemented with `document_type` (`service`, `case_study`, `experience`, `other`), `demo`, `approved` and `active`. JSON creation may explicitly approve; uploads always start unapproved. PATCH requires If-Match; a content edit always requires a separate approval. Indexing accepts `{version_id}` and returns `{job_id,status,poll_url,document_id,version_id}` with a Location header. Its idempotency scope is `knowledge:<document_id>`. Polling/cancellation/retry reuse `/jobs`; knowledge jobs have null lead/run IDs. Retrieval accepts `{query_text?,lead_id?,service_id?,include_demo:false}`. Supply query text or a lead with a saved description; service must be active and owned. Responses include at most three `sources`, `empty_reason`, threshold, candidate count, incompatible count and model identity. Source records carry document/version/chunk IDs, original text/offsets, type, title, demo label and raw cosine similarity. Incompatible indexes never rank; empty results are explicit.
+
 | Owner | Method and path | Input | Output |
 |---|---|---|---|
-| 12 | `GET /knowledge`; `POST /knowledge` | JSON title, type, text, approved, fictional_demo | list / 201 document and version |
-| 12 | `POST /knowledge/uploads` | multipart UTF-8 TXT, title, type, approved, fictional_demo | 201 document and version |
-| 12 | `GET /knowledge/{id}`; `PATCH /knowledge/{id}` | edit text/title/type/approved/archived, If-Match | document/new version and indexing state |
+| 12 | `GET /knowledge`; `POST /knowledge` | JSON title, document_type, text, approved, demo; list pagination and include_inactive | list / 201 document and version |
+| 12 | `POST /knowledge/uploads` | multipart UTF-8 TXT file, title, document_type, demo | 201 unapproved document and version |
+| 12 | `GET /knowledge/{id}`; `PATCH /knowledge/{id}` | edit text/title/document_type/demo/approved/active, If-Match | document/new version, version history and index status |
 | 12 | `POST /knowledge/{id}/index-jobs` | current version ID, Idempotency-Key | 202 job receipt |
-| 12 | `POST /knowledge/retrieval-preview` | lead_id, service_id, analysis_run_id | up to 3 eligible chunks with similarity, or explicit empty reason |
+| 12 | `POST /knowledge/retrieval-preview` | query_text or lead_id with description, optional service_id, include_demo=false | up to 3 eligible chunks with similarity, or explicit empty reason |
 | 13 | `POST /leads/{id}/outreach-jobs` | service_id, analysis_run_id, optional acknowledge_missing_analysis, Idempotency-Key | 202 draft job; current supported context required |
-| 13 | `GET /leads/{id}/drafts`; `GET /drafts/{id}` | pagination | series, revisions, sources, review/freshness |
-| 13 | `POST /drafts/{id}/revisions` | subject, body, claim_sources/removed_claims optional, If-Match | new Edited revision, never mutate approved text; validate sources belong to selected company/agency |
+| 13 | `GET /leads/{id}/drafts`; `GET /drafts/{id}` | at most 100 draft series | series, revisions, sources, review/freshness |
+| 13 | `POST /drafts/{id}/revisions` | subject, body, claims [{text, source_id, quote}], If-Match | new Edited revision, never mutate approved text; validate sources belong to selected company/agency |
 | 13 | `POST /drafts/{id}/review` | decision Approved/Rejected, reviewer, factual_review_acknowledged required for approval, reason optional (required reject), If-Match | new review revision with time |
-| 13 | `GET /drafts/{id}/approved-text` | revision_id optional, must be Approved | plain text/JSON for manual copy |
+| 13 | `GET /drafts/{id}/approved-text` | current revision must be Approved; historical approval remains in draft history | plain text/JSON for manual copy |
 
 Regeneration uses a new outreach job key and creates a new draft series. For the lean MVP, stale grounding blocks new approval: regenerate from current context, then edit/review the new series. Editing old text alone does not make its sources current. Preserve previously approved history with a stale warning. There is no `/send` endpoint.
 
@@ -120,4 +122,20 @@ Phase 6 availability: live requests can be queued when the worker is available, 
 
 Phase 7 saved upload tokens are scoped to a lead and source mode. An unconsumed token expires after one hour by default; attached evidence can be reused by retry of its owning job. Tokens are attached in the job/run/activity transaction, and idempotency replay comes first. Supporting-page selection is unavailable in saved mode. A malformed image with valid text produces an image warning; oversized request/file byte counts return 413. Image/thumbnail responses verify hashes and use no-store/nosniff. Lead deletion returns 202 with {deleted:true,cleanup:{state:pending,tasks:N}} when file cleanup is queued, otherwise 204.
 
-Phase 8: GET /runs/{id} now includes nullable business_analysis with result/provenance. Results use summary plus summary_sources, optional industry/employee_count, cited products/markets and explicitly hypothetical opportunities. Logical website_text citations map through provenance.sources to an owned evidence ID. Manual sources use manual:<field>. Every interpretation remains review-required and does not edit leads. GET /health includes generation_model separately from process-level ollama readiness. Saved jobs reach visual_metrics after NLP; CV remains unbuilt.
+Phase 8: GET /runs/{id} now includes nullable business_analysis with result/provenance. Results use summary plus summary_sources, optional industry/employee_count, cited products/markets and explicitly hypothetical opportunities. Logical website_text citations map through provenance.sources to an owned evidence ID. Manual sources use manual:<field>. Every interpretation remains review-required and does not edit leads. GET /health includes generation_model separately from process-level ollama readiness. Saved jobs reach visual_metrics after NLP; Phase 9 implements that stage.
+
+Phase 9: GET /runs/{id} includes nullable visual_analysis with id, result, provenance and created_at. Result contains available, reason, nullable metrics, limitations, and null review_score/calibration_id. Provenance pins evidence/review revision, original hash, preprocessing/library identity and cache origin. Missing images do not return zero-filled metrics. Evidence review makes history stale without rewriting saved measurements. No new image-processing endpoint is added; job/retry routes drive the worker.
+
+Phase 10: GET /runs/{id} adds nullable semantic_result with result/provenance. Values are raw_cosine [-1,1] and normalized_similarity [0,100]; unavailable values are null with a reason. Provenance records company source, selected texts/hashes, model space, ICP version and cache reuse. GET /health adds embedding_model readiness from worker-verified metadata. Jobs now reach score; no direct model execution endpoint is exposed.
+
+## Phase 11 implemented contract
+
+`GET /leads/{id}/scores` returns paginated history; `GET /scores/{id}` returns score components, saved thresholds, numerator/eligible/available weights and provenance. `GET /runs/{id}` includes nullable `score_result`. Lead responses include nullable `score_id`, score, coverage, numerical band, computed priority, currentness, eligibility and qualification recommendation. Lead detail adds `score_detail` and components. Score sorting keeps nulls last; current computed priority filtering precedes pagination. MVP queries calculate currentness on read and target small local collections.
+
+`POST /leads/{id}/overrides` returns 201 with the expanded score, requires the latest score ID and the current lead edit revision in `If-Match`, and rejects blank reasons/reviewer labels. Priority values: High/Medium/Low/Needs review/clear. Exclusion and qualification values: allow/clear. Clearing appends history. Decisions bind to the exact current input fingerprint and are shown separately as `reviewer_priority`, `exclusion_override`, `qualification_override`, and history with active flags. Arithmetic, computed priority and recommendation remain unchanged. Stale priority/exclusion decisions return 409; a reasoned acknowledgement of the latest stale score is allowed for future manual qualification, without changing the pipeline. Reviewer labels are operator supplied.
+
+Recompute through analysis submission or retry with a new idempotency key. Retrying a completed analysis is now supported, retaining saved evidence and creating a new immutable run. Unscorable components yield null values, not fabricated zeros; a completed job may still have a null score.
+
+## Live collection contract
+
+`POST /leads/{id}/analysis-jobs` now implements `mode=live` with no upload token. `include_supporting_pages=true` adds at most two same-host About/Services pages. Run evidence includes `source_mode=live`, label Live, original/final URLs, collection time, page excerpts/hashes/offsets or screenshot browser/viewport metadata. Existing image, thumbnail and review routes apply. Acquisition failures are independent for live jobs: text/image errors remain visible while later supported analysis can continue. A live retry re-collects, rather than relabelling older evidence. Every terminal analysis job reports retryable, including completed jobs. No new collection endpoint is added.

@@ -1,6 +1,6 @@
 {
   "manifest_version": 1,
-  "status": "generation_installed_two_fixture_trial_checked_other_roles_candidates_only",
+  "status": "generation_and_embedding_installed_trial_checked_optional_cnn_candidate_only",
   "models": [
     {
       "role": "generation",
@@ -27,11 +27,42 @@
       "candidate_id": "sentence-transformers/all-MiniLM-L6-v2",
       "source": "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2",
       "candidate_license": "Apache-2.0",
-      "verified_download_license": null,
-      "revision": null,
+      "verified_download_license": "Apache-2.0; verified from checksum-pinned model card front matter",
+      "revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
       "dimensions": 384,
-      "download_bytes": null,
-      "benchmark_module": "10"
+      "download_bytes": 90882206,
+      "benchmark_module": "10",
+      "digest": "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452",
+      "runtime": "ONNX Runtime CPU; fixed attention-mask mean pooling and L2 normalization",
+      "artifact_hashes": {
+        "tokenizer.json": "be50c3628f2bf5bb5e3a7f17b1f74611b2561a3a27eeab05e5aa30f411572037",
+        "README.md": "dcd602d2fd35c203a247304a06fec6654a12f7941b739f9221a064fe8dc3b7f0",
+        "sentence_bert_config.json": "fc1993fde0a95c24ec6c022539d41cf6e2f7c9721e5415d6fb6897472a9cd4b7",
+        "1_Pooling/config.json": "4be450dde3b0273bb9787637cfbd28fe04a7ba6ab9d36ac48e92b11e350ffc23"
+      },
+      "evaluation": {
+        "date": "2026-10-09",
+        "scope": "Curated synthetic English texts; no population accuracy or conversion probability claim.",
+        "similarities": {
+          "accounting": {
+            "raw_cosine": 0.754771704444879,
+            "normalized_similarity": 75.4771704444879
+          },
+          "construction": {
+            "raw_cosine": 0.11133222140064236,
+            "normalized_similarity": 11.133222140064236
+          }
+        },
+        "load_seconds": 0.7276337000075728,
+        "encode_seconds": {
+          "icp": 0.010585299984086305,
+          "accounting": 0.010222800017800182,
+          "construction": 0.009474100021179765,
+          "long_text": 0.14543700002832338
+        },
+        "repeat_max_absolute_difference": 0.0,
+        "peak_process_ram_bytes": 252608512
+      }
     },
     {
       "role": "optional_cnn",

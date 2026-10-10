@@ -8,13 +8,13 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from fastapi.testclient import TestClient
 from app.main import create_app
-from app.core.errors import AppError
-from app.models.evidence import Evidence, SavedEvidenceUpload
-from app.models.job import Job, JobStage
-from app.models.maintenance import FileCleanupTask
-from app.services.evidence import housekeeping
-from app.services.workflow import StageResult
-from app.worker.main import Worker
+from app.modules.foundation.errors import AppError
+from app.modules.evidence.evidence_model import Evidence, SavedEvidenceUpload
+from app.modules.processing.job_model import Job, JobStage
+from app.modules.foundation.maintenance_model import FileCleanupTask
+from app.modules.evidence.evidence_service import housekeeping
+from app.modules.processing.workflow_service import StageResult
+from app.modules.processing.worker_main import Worker
 from test_leads import setup_campaign, add_lead
 
 
@@ -71,7 +71,10 @@ def test_missing_or_invalid_component_keeps_other_evidence(client, job_lead, reg
     registered_worker.run_once()
     items = client.get('/api/v1/runs/' + job['run_id'] + '/evidence').json()['items']
     assert len(items) == 1 and items[0]['kind'] == expected and items[0]['collected_at'] is None
-    assert client.get(job['poll_url']).json()['status'] == 'partial'
+    polled = client.get(job['poll_url']).json()
+    assert polled['status'] == ('completed' if expected == 'image' else 'partial')
+    if expected == 'image':
+        assert client.get('/api/v1/runs/' + job['run_id']).json()['score_result']['score'] is None
 
 
 def test_bad_text_empty_upload_metadata_and_size_write_no_manifest(client, job_lead, application):
@@ -104,7 +107,7 @@ def test_ownership_mode_and_atomic_attachment(client, job_lead, registered_worke
     other = add_lead(client, campaign, website='https://other.example.com')
     assert submit(client, other, receipt).json()['error']['code'] == 'UPLOAD_NOT_FOUND'
     assert submit(client, job_lead, receipt, mode='cached').status_code == 422
-    from app.services import jobs
+    from app.modules.processing import jobs_service as jobs
     original = jobs.record_activity
     def fail(*args, **kwargs):
         raise AppError('TEST_TRANSACTION_FAILURE', 'Injected transaction failure.', 503)
@@ -182,7 +185,7 @@ def test_integrity_checks_and_lead_delete_cleanup(client, job_lead, registered_w
 
 def test_evidence_stage_and_activity_rollback_together(client, job_lead, registered_worker, application, monkeypatch):
     receipt = upload(client, job_lead).json(); job = submit(client, job_lead, receipt).json()
-    import app.worker.main as module
+    import app.modules.processing.worker_main as module
     original = module.record_activity
     def fail(session, **kwargs):
         if kwargs.get('new_value', {}).get('stage') == 'acquire_text':

@@ -66,54 +66,28 @@ Use a compatible supported Python minor version after checking Windows wheels fo
 
 Maintain `model-manifest.json` with role, ID, revision/digest, licence, download source, bytes, context/dimensions, preprocessing and benchmark date. Combined initial model-download target is at most 5 GB. Track browser and Python dependency downloads separately; avoid implying the model budget covers all installation data.
 
-## Future folder structure
+## Module folder structure
 
-```text
-LeadVision/
-  backend/
-    app/
-      main.py                       # API creation and static interface mounting
-      core/                         # config, errors, time, hashes and safety
-      db/                           # sessions, migrations and repositories
-      models/                       # ORM tables by domain
-      schemas/                      # request, response and model-output validation
-      api/                          # thin route handlers
-      services/                     # business rules
-      integrations/                 # model, browser and HTTP clients (planned)
-      worker/                       # persistent worker (planned)
-      prompts/                      # versioned model prompts (planned)
-    tests/
-      unit/
-      integration/
-      fixtures/                     # small lawful fixtures (planned)
-    pytest.ini
-    .env.example
-    requirements.in
-    requirements.lock.txt
-    requirements-optional.in        # planned optional dependencies
-  frontend/                         # planned HTML, CSS and JavaScript interface
-    index.html
-    css/app.css
-    js/
-  scripts/                          # start/test helpers; future backup commands
-  experiments/                      # planned CNN/ML artifacts
-  workflows/                        # planned n8n exports
-  docs/
-    implementation/
-    evaluation/                     # planned evaluation results
-  data/                             # ignored runtime data
-    leadvision.sqlite3
-    evidence/
-    knowledge/
-    diagnostics/
-    trash/
-  .venv/                            # ignored local Python environment
-  .cache/                           # ignored tooling cache
-  .gitignore
-  README.md
-```
+The user requested one folder per module after the first frontend was built.
+The current structure is documented in [the project folder guide](../project-structure.md).
 
-Backend code and tests live under backend/, frontend files under frontend/, documentation under docs/, and launch/maintenance commands under scripts/. Configuration loads backend/.env; relative runtime paths stay anchored to the project root. The shared project virtual environment remains at .venv/. Each module plan names the specific files it owns. Split a file only when responsibilities need it; the diagram is a convention, not a demand to create empty boilerplate. Keep model caches outside the repository. Configure `DATA_DIR`, API/Ollama hosts, timeouts, model IDs and limits outside code. Store internal relative artifact keys, never client-controlled absolute paths.
+Backend feature code lives in `backend/app/modules/<feature>/`. Each feature
+keeps its files directly in that folder, with `_api.py`, `_schema.py`,
+`_service.py`, `_model.py`, `_repository.py` and `_client.py` names.
+Foundation owns shared configuration and database
+infrastructure; processing owns the worker. Numbered migrations remain together
+directly in `modules/foundation/` with their original source/checksums.
+
+Frontend feature screens live in `frontend/modules/<feature>/index.js`.
+`frontend/index.html` is the common shell; `frontend/app.js` connects navigation;
+`frontend/shared/` owns reusable API/UI/state helpers and the common theme.
+Tests stay centrally organized as unit and integration checks. Documentation,
+scripts, runtime data and local models keep their project-level directories.
+
+No database migration or data reset is part of this source-file move.
+Configuration still loads `backend/.env`; runtime paths and model caches stay
+anchored to the project root. Launch scripts use the relocated worker path.
+Future feature plans use the same folder convention when implemented.
 
 ## Complete processing workflow
 
@@ -181,3 +155,8 @@ Proposed new defaults to review: cleaned text 30,000 characters/page; uploaded s
 - Git initialization and first GitHub push are future delivery steps. Confirm repository visibility before pushing as the SRS requests; planning does not publish anything.
 
 Any amendment records affected requirement IDs, revised acceptance evidence, reason and deadline impact. Keep a decision log with statuses `proposed`, `benchmarked`, `accepted` or `deferred`.
+
+
+## Implemented agency knowledge flow (module 12)
+
+Knowledge stays in its own flat module folder. Saving agency text creates an immutable version; review controls document approval. Index jobs pin the document revision and embedding identity, reuse the worker and vector cache, and publish a complete set of passages atomically. Retrieval filters current/active/approved documents and completed compatible indexes before ranking, takes only the latest completed index per document revision, and excludes demo material by default. Explicit preview text is operator-provided company context; a lead-based preview uses its entered description. Query text is data, not instructions. Sources carry stable IDs and version/excerpt references for module 13 grounding. No message generation or sending is part of module 12.
